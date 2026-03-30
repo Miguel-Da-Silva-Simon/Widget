@@ -1,0 +1,27 @@
+Widget no aparece en "Añadir widgets" — comprobaciones (Windows 11)
+================================================================
+
+1) MODO DESARROLLADOR (obligatorio con MSIX sideload / F5)
+   Configuración → Privacidad y seguridad → Para desarrolladores
+   Activar "Modo de desarrollador".
+   (Microsoft lo documenta para widgets instalados fuera de Store.)
+
+2) Windows 11
+   El paquete declara MinVersion 10.0.22000 (Windows 11). En Windows 10 el widget no se registrará en el panel.
+
+3) Reinstalar el paquete limpio
+   - Desinstalar "Widget TimeTracking" (Configuración → Aplicaciones).
+   - Compilar de nuevo Widget.TimeTracking.Package e instalar el MSIX generado.
+   - Reiniciar el PC o cerrar sesión (refresca el registro de proveedores).
+
+4) Comprobar que el paquete está instalado
+   PowerShell:
+   Get-AppxPackage -Name *Widget.TimeTracking*
+
+5) Buscar en el panel
+   Panel de widgets → "+" → Añadir widgets → buscar "Fichaje" (DisplayName del Definition).
+
+6) Si sigue sin salir
+   - Ejecutar una vez "Fichaje (host widget)" desde el menú Inicio (registra COM).
+   - Cerrar Widgets.exe y volver a abrir el panel de widgets.
+   - Revisar que la compilación no falle con DEP1000 (cierra procesos / borra bin del Package).

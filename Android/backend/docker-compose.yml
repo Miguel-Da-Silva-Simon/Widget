@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: clocking
+      POSTGRES_USER: clocking
+      POSTGRES_PASSWORD: clocking
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clocking -d clocking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/clocking
+      SPRING_DATASOURCE_USERNAME: clocking
+      SPRING_DATASOURCE_PASSWORD: clocking
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

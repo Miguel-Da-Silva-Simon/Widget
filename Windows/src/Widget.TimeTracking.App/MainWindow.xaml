@@ -1,0 +1,140 @@
+<Window
+    x:Class="Widget.TimeTracking.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Fichaje">
+    <Grid Background="#FFFFFF" RequestedTheme="Light">
+        <ScrollViewer>
+            <StackPanel Spacing="20" Padding="32">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Fichaje" FontSize="30" FontWeight="SemiBold" Foreground="#5F96F9" />
+                    <TextBlock Text="App mínima acompañante para controlar la sesión mock del widget y visualizar descansos de café/comida." TextWrapping="Wrap" Foreground="#5C5C5C" />
+                </StackPanel>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Sesión" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="AuthenticationStateTextBlock" Text="Estado: cargando..." TextWrapping="Wrap" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="CurrentUserTextBlock" Text="Usuario: —" TextWrapping="Wrap" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="SignedInAtTextBlock" Text="Sesión iniciada: —" TextWrapping="Wrap" Foreground="#1F1F1F" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="SignInButton" Content="Iniciar sesión mock" Click="SignInButton_Click" Background="#5F96F9" Foreground="#FFFFFF" />
+                            <Button x:Name="SignOutButton" Content="Cerrar sesión" Click="SignOutButton_Click" Foreground="#1F1F1F" />
+                            <Button x:Name="RefreshButton" Content="Actualizar" Click="RefreshButton_Click" Foreground="#1F1F1F" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Estado actual" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="StatusHeadlineTextBlock" Text="Cargando estado..." FontSize="28" FontWeight="SemiBold" Foreground="#1F1F1F" TextWrapping="Wrap" />
+                        <TextBlock x:Name="StatusDetailTextBlock" Text="Detalle: —" TextWrapping="Wrap" Foreground="#5C5C5C" />
+                        <TextBlock x:Name="LastActionTextBlock" Text="Última acción: —" TextWrapping="Wrap" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="LastActionTimeTextBlock" Text="Hora: —" TextWrapping="Wrap" Foreground="#1F1F1F" />
+
+                        <Grid ColumnSpacing="12" RowSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Button x:Name="ClockInButton" Grid.Row="0" Grid.Column="0" Content="Entrar" Click="ClockInButton_Click" Background="#5F96F9" Foreground="#FFFFFF" />
+                            <Button x:Name="StartCoffeeBreakButton" Grid.Row="0" Grid.Column="1" Content="Iniciar café" Click="StartCoffeeBreakButton_Click" Foreground="#1F1F1F" />
+                            <Button x:Name="EndCoffeeBreakButton" Grid.Row="0" Grid.Column="2" Content="Finalizar café" Click="EndCoffeeBreakButton_Click" Foreground="#1F1F1F" />
+
+                            <Button x:Name="StartFoodBreakButton" Grid.Row="1" Grid.Column="0" Content="Iniciar comida" Click="StartFoodBreakButton_Click" Foreground="#1F1F1F" />
+                            <Button x:Name="EndFoodBreakButton" Grid.Row="1" Grid.Column="1" Content="Finalizar comida" Click="EndFoodBreakButton_Click" Foreground="#1F1F1F" />
+                            <Button x:Name="ClockOutButton" Grid.Row="1" Grid.Column="2" Content="Salir" Click="ClockOutButton_Click" Foreground="#1F1F1F" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Timeline del día" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <TextBlock Text="Secuencia compacta de la jornada para visualizar entradas, descansos y salidas." TextWrapping="Wrap" Foreground="#5C5C5C" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="TimelinePanel" Orientation="Horizontal" Spacing="12" />
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Resumen" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <Grid ColumnSpacing="12" RowSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Grid.Column="0" Padding="16" Background="#FFFFFF" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Total horas último fichaje" Foreground="#5C5C5C" />
+                                    <TextBlock x:Name="LastCompletedShiftDurationTextBlock" Text="00h 00m" FontSize="24" FontWeight="SemiBold" Foreground="#5F96F9" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="0" Grid.Column="1" Padding="16" Background="#FFFFFF" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Total horas trabajadas este mes" Foreground="#5C5C5C" />
+                                    <TextBlock x:Name="WorkedThisMonthDurationTextBlock" Text="00h 00m" FontSize="24" FontWeight="SemiBold" Foreground="#5F96F9" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="0" Padding="16" Background="#FFFFFF" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Café hoy" Foreground="#5C5C5C" />
+                                    <TextBlock x:Name="CoffeeTodayDurationTextBlock" Text="00h 00m" FontSize="24" FontWeight="SemiBold" Foreground="#5F96F9" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Row="1" Grid.Column="1" Padding="16" Background="#FFFFFF" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Comida hoy" Foreground="#5C5C5C" />
+                                    <TextBlock x:Name="FoodTodayDurationTextBlock" Text="00h 00m" FontSize="24" FontWeight="SemiBold" Foreground="#5F96F9" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Preferencias rápidas" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <TextBlock Text="Hora de referencia para la futura app completa. Hoy queda como preferencia local visual, sin persistencia." TextWrapping="Wrap" Foreground="#5C5C5C" />
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Hora objetivo" Foreground="#1F1F1F" />
+                            <TimePicker
+                                x:Name="ReferenceTimePicker"
+                                MinuteIncrement="5"
+                                TimeChanged="ReferenceTimePicker_TimeChanged" />
+                            <TextBlock x:Name="ReferenceTimeTextBlock" Text="Hora elegida: —" TextWrapping="Wrap" Foreground="#1F1F1F" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Padding="20" Background="#F7F9FD" CornerRadius="12" BorderThickness="1" BorderBrush="#D7E3FB">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Archivos locales" FontSize="20" FontWeight="SemiBold" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="SessionFilePathTextBlock" Text="Sesión: —" TextWrapping="WrapWholeWords" Foreground="#1F1F1F" />
+                        <TextBlock x:Name="TimeTrackingFilePathTextBlock" Text="Fichaje: —" TextWrapping="WrapWholeWords" Foreground="#1F1F1F" />
+                        <TextBlock Text="La app será la dueña del login real más adelante. El widget solo consumirá el estado de sesión." TextWrapping="Wrap" Foreground="#5C5C5C" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0'">
+    <VisualStudioVersion>15.0</VisualStudioVersion>
+  </PropertyGroup>
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <WapProjPath Condition="'$(WapProjPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
+  </PropertyGroup>
+
+  <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
+
+  <PropertyGroup>
+    <ProjectGuid>4D9091D4-6224-4C55-9C74-44A09A896BD6</ProjectGuid>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <DefaultLanguage>es-ES</DefaultLanguage>
+    <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
+    <GenerateTemporaryStoreCertificate>true</GenerateTemporaryStoreCertificate>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <AppxBundlePlatforms>x64|arm64</AppxBundlePlatforms>
+    <EntryPointProjectUniqueName>..\Widget.TimeTracking.WidgetHost\Widget.TimeTracking.WidgetHost.csproj</EntryPointProjectUniqueName>
+    <!-- WAP usa .NET Framework; las referencias son net8.0. La compatibilidad es la esperada para Desktop Bridge. -->
+    <NoWarn>$(NoWarn);NU1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <AppxBundle>Always</AppxBundle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <AppxBundle>Always</AppxBundle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <AppxBundle>Always</AppxBundle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <AppxBundle>Always</AppxBundle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Square44x44Logo.png" />
+    <Content Include="Assets\Square150x150Logo.png" />
+    <Content Include="Assets\SplashScreen.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="ProviderAssets\WidgetIcon.png" />
+    <Content Include="ProviderAssets\WidgetSmall.png" />
+    <Content Include="ProviderAssets\WidgetMedium.png" />
+    <Content Include="ProviderAssets\WidgetLarge.png" />
+    <Content Include="Public\widget-extension.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Widget.TimeTracking.App\Widget.TimeTracking.App.csproj" />
+    <ProjectReference Include="..\Widget.TimeTracking.WidgetHost\Widget.TimeTracking.WidgetHost.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005">
+      <IncludeAssets>build</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
+
+  <!-- Evita DEP1000 al liberar resources.pri: cierra host/app y borra .pri bloqueados. Desactivar: /p:StopWidgetBeforeBuild=false -->
+  <PropertyGroup>
+    <StopWidgetBeforeBuild Condition="'$(StopWidgetBeforeBuild)' == ''">true</StopWidgetBeforeBuild>
+  </PropertyGroup>
+  <!-- PrepareForBuild + antes de empaquetar: cierra host, app y Widgets.exe (bloqueo 0x800704C8 de resources.pri). No borramos .pri aquí (evita 0x80070002 incremental). Omitir panel: WIDGET_SKIP_WIDGETS_EXE=1 -->
+  <Target Name="StopWidgetDevProcesses" BeforeTargets="PrepareForBuild" Condition="'$(StopWidgetBeforeBuild)' == 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\tools\stop-widget-dev.ps1&quot;" IgnoreExitCode="true" />
+  </Target>
+  <Target Name="StopWidgetDevProcessesBeforePackage" BeforeTargets="GenerateAppxPackage" Condition="'$(StopWidgetBeforeBuild)' == 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\tools\stop-widget-dev.ps1&quot;" IgnoreExitCode="true" />
+  </Target>
+</Project>

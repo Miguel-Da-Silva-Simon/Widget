@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 com rescap">
+
+  <Identity
+    Name="Widget.TimeTracking"
+    Publisher="CN=Widget.TimeTracking"
+    Version="1.0.2.0" />
+
+  <Properties>
+    <DisplayName>Widget TimeTracking</DisplayName>
+    <PublisherDisplayName>Widget TimeTracking</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <!-- Los widgets del panel requieren Windows 11 (build 22000+). -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+
+  <Applications>
+    <!-- El host del widget y la extensión deben ir con el mismo ejecutable que EntryPointProjectUniqueName del .wapproj. -->
+    <Application
+      Id="WidgetHost"
+      Executable="Widget.TimeTracking.WidgetHost\Widget.TimeTracking.WidgetHost.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Fichaje (host widget)"
+        Description="Host del widget de fichaje"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="Widget.TimeTracking.WidgetHost\Widget.TimeTracking.WidgetHost.exe" DisplayName="Widget TimeTracking Host">
+              <com:Class Id="5B1890A1-3B2A-4A8A-95B6-7E77B18A55B8" DisplayName="TimeTrackingWidgetProvider" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+        <uap3:Extension Category="windows.appExtension">
+          <uap3:AppExtension Name="com.microsoft.windows.widgets" DisplayName="Fichaje" Id="WidgetTimeTracking" PublicFolder="Public">
+            <uap3:Properties>
+              <WidgetProvider>
+                <ProviderIcons>
+                  <Icon Path="ProviderAssets\WidgetIcon.png" />
+                </ProviderIcons>
+                <Activation>
+                  <CreateInstance ClassId="5B1890A1-3B2A-4A8A-95B6-7E77B18A55B8" />
+                </Activation>
+                <Definitions>
+                  <Definition
+                    Id="TimeTracking_Widget"
+                    DisplayName="Fichaje"
+                    Description="Fichaje laboral rápido con persistencia local mock"
+                    AllowMultiple="false">
+                    <Capabilities>
+                      <Capability>
+                        <Size Name="small" />
+                      </Capability>
+                      <Capability>
+                        <Size Name="medium" />
+                      </Capability>
+                      <Capability>
+                        <Size Name="large" />
+                      </Capability>
+                    </Capabilities>
+                    <ThemeResources>
+                      <Icons>
+                        <Icon Path="ProviderAssets\WidgetIcon.png" />
+                      </Icons>
+                      <Screenshots>
+                        <Screenshot Path="ProviderAssets\WidgetMedium.png" DisplayAltText="Vista media del widget de fichaje" />
+                      </Screenshots>
+                    </ThemeResources>
+                  </Definition>
+                </Definitions>
+              </WidgetProvider>
+            </uap3:Properties>
+          </uap3:AppExtension>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+
+    <Application
+      Id="TimeTrackingApp"
+      Executable="Widget.TimeTracking.App\Widget.TimeTracking.App.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Fichaje"
+        Description="App acompañante para sesión y diagnóstico del widget de fichaje"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

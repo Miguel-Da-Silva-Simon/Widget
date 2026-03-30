@@ -1,0 +1,43 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio / MSBuild
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.rsuser
+*.sln.docstates
+
+# NuGet
+**/packages/*
+!**/packages/build/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Tests
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# MSIX / packaging
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+*_StoreKey.pfx
+*.appxupload
+*.msixupload
+
+# Others
+*.log
+*.tlog
+*.cache
+*.tmp
+*.temp

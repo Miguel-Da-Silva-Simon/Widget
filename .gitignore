@@ -1,0 +1,7 @@
+Android/.gradle-android/
+Android/.gradle-backend/
+Android/.idea/
+Android/androidApp/.idea/
+Android/androidApp/.kotlin/
+.DS_Store
+Thumbs.db

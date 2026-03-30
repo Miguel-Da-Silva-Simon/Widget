@@ -1,0 +1,18 @@
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="sygna_blue">#73A5FF</color>
+    <color name="sygna_blue_light">#DCE9FF</color>
+    <color name="gray_100">#F5F5F5</color>
+    <color name="gray_300">#DDDDDD</color>
+    <color name="gray_500">#888888</color>
+    <color name="widget_screen_bg">#FAFBFE</color>
+    <color name="widget_card_stroke">#140F172A</color>
+    <color name="widget_action_blue">#6E99F8</color>
+    <color name="widget_action_blue_dark">#5E88EE</color>
+    <color name="widget_action_disabled_bg">#EEF3FB</color>
+    <color name="widget_action_disabled_stroke">#D7E1F0</color>
+    <color name="work_green">#22C55E</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#666666</color>
+</resources>

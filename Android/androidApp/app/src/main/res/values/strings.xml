@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Sygna Widget</string>
+    <string name="widget_name">Fichaje</string>
+    <string name="widget_title">Fichaje</string>
+    <string name="widget_cd_primary">Accion principal</string>
+    <string name="widget_cd_descanso">Descanso</string>
+    <string name="widget_cd_comida">Comida</string>
+    <string name="widget_metric_last">Ultimo fichaje</string>
+    <string name="widget_metric_next">Siguiente</string>
+    <string name="widget_metric_mode">Modo</string>
+</resources>
