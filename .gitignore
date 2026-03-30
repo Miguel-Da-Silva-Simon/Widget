@@ -7,5 +7,8 @@ Android/build/
 Android/local.properties
 Android/androidApp/.idea/
 Android/androidApp/.kotlin/
+Android/androidApp/.gradle/
+Android/androidApp/.gradle-user-home/
+Android/backend/.gradle/
 .DS_Store
 Thumbs.db
