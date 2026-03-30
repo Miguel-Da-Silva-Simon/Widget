@@ -13,11 +13,13 @@ import com.example.widget_android.data.AttendanceDurations
 import com.example.widget_android.data.AttendanceState
 import com.example.widget_android.data.AttendanceTimeUtils
 import com.example.widget_android.data.ClockingApiRepository
+import com.example.widget_android.data.ClockingActionBindings
 import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
 import com.example.widget_android.data.PrefKeys
 import com.example.widget_android.data.TokenHolder
 import com.example.widget_android.data.appDataStore
+import com.example.widget_android.data.resolveActionBindings
 import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -56,15 +58,17 @@ internal object FichajeWidgetBinder {
             return views
         }
 
+        val actions = state.resolveActionBindings()
+
         applyTimer(views, state)
         applySummary(views, state, breakStartMs, mealStartMs)
-        applyActions(views, state)
+        applyActions(views, state, actions)
         bindClicks(
             app,
             views,
-            primaryActionExtra(state),
-            if (supportsBreak(state)) FichajeWidgetActionReceiver.A_BREAK else NOOP_ACTION,
-            if (supportsMeal(state)) FichajeWidgetActionReceiver.A_MEAL else NOOP_ACTION
+            actions.widgetPrimaryAction?.name ?: NOOP_ACTION,
+            actions.breakAction?.name ?: NOOP_ACTION,
+            actions.mealAction?.name ?: NOOP_ACTION
         )
         return views
     }
@@ -199,11 +203,14 @@ internal object FichajeWidgetBinder {
         }
     }
 
-    private fun applyActions(views: RemoteViews, state: ClockingState) {
-        val primaryIsExit = state.enabledActions.contains(AttendanceAction.CLOCK_OUT)
-        val primaryEnabled = primaryIsExit || state.enabledActions.contains(AttendanceAction.CLOCK_IN)
-        val primaryHighlighted = state.nextAllowedAction == AttendanceAction.CLOCK_OUT ||
-            state.nextAllowedAction == AttendanceAction.CLOCK_IN
+    private fun applyActions(
+        views: RemoteViews,
+        state: ClockingState,
+        actions: ClockingActionBindings
+    ) {
+        val primaryIsExit = actions.widgetPrimaryAction == AttendanceAction.CLOCK_OUT
+        val primaryEnabled = actions.widgetPrimaryAction != null
+        val primaryHighlighted = state.nextAllowedAction == actions.widgetPrimaryAction
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
@@ -216,9 +223,8 @@ internal object FichajeWidgetBinder {
             }
         )
 
-        val breakEnabled = supportsBreak(state)
-        val breakHighlighted = state.nextAllowedAction == AttendanceAction.BREAK_START ||
-            state.nextAllowedAction == AttendanceAction.BREAK_END
+        val breakEnabled = actions.breakEnabled
+        val breakHighlighted = state.nextAllowedAction == actions.breakAction
         setActionAppearance(
             views,
             R.id.widget_icon_break,
@@ -226,9 +232,8 @@ internal object FichajeWidgetBinder {
             if (breakEnabled) R.drawable.ic_widget_descanso_white else R.drawable.ic_widget_descanso_dim
         )
 
-        val mealEnabled = supportsMeal(state)
-        val mealHighlighted = state.nextAllowedAction == AttendanceAction.MEAL_START ||
-            state.nextAllowedAction == AttendanceAction.MEAL_END
+        val mealEnabled = actions.mealEnabled
+        val mealHighlighted = state.nextAllowedAction == actions.mealAction
         setActionAppearance(
             views,
             R.id.widget_icon_meal,
@@ -284,25 +289,17 @@ internal object FichajeWidgetBinder {
             return PendingIntent.getBroadcast(app, requestCode, intent, flags)
         }
 
-        views.setOnClickPendingIntent(R.id.widget_btn_primary, pi(primaryAction, PI_PRIMARY))
-        views.setOnClickPendingIntent(R.id.widget_btn_break, pi(breakAction, PI_BREAK))
-        views.setOnClickPendingIntent(R.id.widget_btn_meal, pi(mealAction, PI_MEAL))
+        val primaryPendingIntent = pi(primaryAction, PI_PRIMARY)
+        val breakPendingIntent = pi(breakAction, PI_BREAK)
+        val mealPendingIntent = pi(mealAction, PI_MEAL)
+
+        views.setOnClickPendingIntent(R.id.widget_btn_primary, primaryPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_icon_primary, primaryPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_btn_break, breakPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_icon_break, breakPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_btn_meal, mealPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_icon_meal, mealPendingIntent)
     }
-
-    private fun supportsBreak(state: ClockingState): Boolean =
-        state.enabledActions.contains(AttendanceAction.BREAK_START) ||
-            state.enabledActions.contains(AttendanceAction.BREAK_END)
-
-    private fun supportsMeal(state: ClockingState): Boolean =
-        state.enabledActions.contains(AttendanceAction.MEAL_START) ||
-            state.enabledActions.contains(AttendanceAction.MEAL_END)
-
-    private fun primaryActionExtra(state: ClockingState): String =
-        when {
-            state.enabledActions.contains(AttendanceAction.CLOCK_OUT) -> FichajeWidgetActionReceiver.A_CLOCK_OUT
-            state.enabledActions.contains(AttendanceAction.CLOCK_IN) -> FichajeWidgetActionReceiver.A_CLOCK_IN
-            else -> NOOP_ACTION
-        }
 
     private fun statusTitle(state: ClockingState): String =
         when (state.currentState) {

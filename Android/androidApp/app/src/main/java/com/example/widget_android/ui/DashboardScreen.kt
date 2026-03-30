@@ -56,6 +56,7 @@ import com.example.widget_android.data.AttendanceTimeUtils
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
+import com.example.widget_android.data.resolveActionBindings
 import com.example.widget_android.network.toUserMessage
 import com.example.widget_android.theme.Gray100
 import com.example.widget_android.theme.Gray300
@@ -88,6 +89,17 @@ fun DashboardScreen(
 
     suspend fun refreshWidget() {
         FichajeWidgetUpdater.updateAll(context.applicationContext)
+    }
+
+    suspend fun runAttendanceAction(action: AttendanceAction?) {
+        if (action == null) return
+        repository.doAction(action).fold(
+            onSuccess = {
+                state = it
+                refreshWidget()
+            },
+            onFailure = { error = it.toUserMessage() }
+        )
     }
 
     suspend fun reload() {
@@ -245,25 +257,17 @@ fun DashboardScreen(
             AttendanceState.MEAL_ACTIVE -> Color(0xFFFB923C)
             else -> Gray300
         }
-        val enabled = s.enabledActions
-        val entradaHit = enabled.contains(AttendanceAction.CLOCK_IN)
-        val coffeeHit = enabled.contains(AttendanceAction.BREAK_START) ||
-            enabled.contains(AttendanceAction.BREAK_END)
-        val mealHit = enabled.contains(AttendanceAction.MEAL_START) ||
-            enabled.contains(AttendanceAction.MEAL_END)
-        val salidaHit = enabled.contains(AttendanceAction.CLOCK_OUT)
+        val actions = s.resolveActionBindings()
+        val entradaHit = actions.clockInEnabled
+        val coffeeHit = actions.breakEnabled
+        val mealHit = actions.mealEnabled
+        val salidaHit = actions.clockOutEnabled
         val nextAction = s.nextAllowedAction
 
-        val hiEntrada = entradaHit && nextAction == AttendanceAction.CLOCK_IN
-        val hiBreak = coffeeHit && (
-            nextAction == AttendanceAction.BREAK_START ||
-                nextAction == AttendanceAction.BREAK_END
-            )
-        val hiMeal = mealHit && (
-            nextAction == AttendanceAction.MEAL_START ||
-                nextAction == AttendanceAction.MEAL_END
-            )
-        val hiSalida = salidaHit && nextAction == AttendanceAction.CLOCK_OUT
+        val hiEntrada = entradaHit && nextAction == actions.clockInAction
+        val hiBreak = coffeeHit && nextAction == actions.breakAction
+        val hiMeal = mealHit && nextAction == actions.mealAction
+        val hiSalida = salidaHit && nextAction == actions.clockOutAction
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Surface(
@@ -366,19 +370,11 @@ fun DashboardScreen(
                         iconOff = R.drawable.ic_widget_entrada_dim,
                         compact = true,
                         onClick = {
-                            scope.launch {
-                                repository.doAction(AttendanceAction.CLOCK_IN).fold(
-                                    onSuccess = {
-                                        state = it
-                                        refreshWidget()
-                                    },
-                                    onFailure = { error = it.toUserMessage() }
-                                )
-                            }
+                            scope.launch { runAttendanceAction(actions.clockInAction) }
                         }
                     )
                     ActionCircleDrawable(
-                        title = if (enabled.contains(AttendanceAction.BREAK_END)) "Fin desc." else "Descanso",
+                        title = if (actions.breakAction == AttendanceAction.BREAK_END) "Fin desc." else "Descanso",
                         caption = "Desc.",
                         enabled = coffeeHit && !s.isFinished,
                         highlighted = hiBreak,
@@ -386,25 +382,11 @@ fun DashboardScreen(
                         iconOff = R.drawable.ic_widget_descanso_dim,
                         compact = true,
                         onClick = {
-                            scope.launch {
-                                repository.doAction(
-                                    if (enabled.contains(AttendanceAction.BREAK_START)) {
-                                        AttendanceAction.BREAK_START
-                                    } else {
-                                        AttendanceAction.BREAK_END
-                                    }
-                                ).fold(
-                                    onSuccess = {
-                                        state = it
-                                        refreshWidget()
-                                    },
-                                    onFailure = { error = it.toUserMessage() }
-                                )
-                            }
+                            scope.launch { runAttendanceAction(actions.breakAction) }
                         }
                     )
                     ActionCircleDrawable(
-                        title = if (enabled.contains(AttendanceAction.MEAL_END)) "Fin comida" else "Comida",
+                        title = if (actions.mealAction == AttendanceAction.MEAL_END) "Fin comida" else "Comida",
                         caption = "Comida",
                         enabled = mealHit && !s.isFinished,
                         highlighted = hiMeal,
@@ -412,21 +394,7 @@ fun DashboardScreen(
                         iconOff = R.drawable.ic_widget_comida_dim,
                         compact = true,
                         onClick = {
-                            scope.launch {
-                                repository.doAction(
-                                    if (enabled.contains(AttendanceAction.MEAL_START)) {
-                                        AttendanceAction.MEAL_START
-                                    } else {
-                                        AttendanceAction.MEAL_END
-                                    }
-                                ).fold(
-                                    onSuccess = {
-                                        state = it
-                                        refreshWidget()
-                                    },
-                                    onFailure = { error = it.toUserMessage() }
-                                )
-                            }
+                            scope.launch { runAttendanceAction(actions.mealAction) }
                         }
                     )
                     ActionCircleDrawable(
@@ -438,15 +406,7 @@ fun DashboardScreen(
                         iconOff = R.drawable.ic_widget_salida_dim,
                         compact = true,
                         onClick = {
-                            scope.launch {
-                                repository.doAction(AttendanceAction.CLOCK_OUT).fold(
-                                    onSuccess = {
-                                        state = it
-                                        refreshWidget()
-                                    },
-                                    onFailure = { error = it.toUserMessage() }
-                                )
-                            }
+                            scope.launch { runAttendanceAction(actions.clockOutAction) }
                         }
                     )
                 }
