@@ -24,11 +24,15 @@ object ApiClient {
     fun effectiveBaseUrl(context: Context): String {
         val configured = BuildConfig.API_BASE_URL
         val isEmulator = isProbablyEmulator()
-        return if (!isEmulator && configured.contains("10.0.2.2")) {
-            "http://127.0.0.1:8080/"
-        } else {
-            configured
+        // Móvil físico con variante "emulator" (10.0.2.2): usar localhost + adb reverse.
+        if (!isEmulator && configured.contains("10.0.2.2")) {
+            return "http://127.0.0.1:8080/"
         }
+        // Emulador con variante "device" (127.0.0.1): 127.0.0.1 en el AVD no es el PC; el host es 10.0.2.2.
+        if (isEmulator && (configured.contains("127.0.0.1") || configured.contains("localhost"))) {
+            return "http://10.0.2.2:8080/"
+        }
+        return configured
     }
 
     private fun retrofit(appContext: Context): Retrofit {

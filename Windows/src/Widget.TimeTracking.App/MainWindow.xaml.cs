@@ -1,10 +1,13 @@
 using System.Globalization;
+using System.IO;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
+using Windows.Storage.Pickers;
 using WinRT.Interop;
 using Widget.TimeTracking.App.Composition;
 using Widget.TimeTracking.Core.Enums;
@@ -24,7 +27,7 @@ public sealed partial class MainWindow : Window
         ConfigureWindow();
         ReferenceTimePicker.Time = DefaultReferenceTime;
         UpdateReferenceTimeView(ReferenceTimePicker.Time);
-        SessionFilePathTextBlock.Text = $"Sesiï¿½n: {AppServices.LocalStateOptions.SessionFullPath}";
+        SessionFilePathTextBlock.Text = $"Sesin: {AppServices.LocalStateOptions.SessionFullPath}";
         TimeTrackingFilePathTextBlock.Text = $"Fichaje: {AppServices.LocalStateOptions.FullPath}";
         _ = RefreshAsync();
     }
@@ -89,31 +92,89 @@ public sealed partial class MainWindow : Window
     {
         var session = await AppServices.UserSessionService.GetCurrentSessionAsync();
         var resolvedSnapshot = snapshot ?? await AppServices.TimeTrackingService.GetStateAsync();
+        var profilePhotoPath = session.IsAuthenticated
+            ? await AppServices.UserSessionService.GetProfilePhotoAbsolutePathIfExistsAsync()
+            : null;
 
-        UpdateSessionView(session);
+        UpdateSessionView(session, profilePhotoPath);
         UpdateTimeTrackingView(session, resolvedSnapshot);
     }
 
-    private void UpdateSessionView(UserSession session)
+    private async void ChooseProfilePhotoButton_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker();
+        var hwnd = WindowNative.GetWindowHandle(this);
+        InitializeWithWindow.Initialize(picker, hwnd);
+        picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+        picker.FileTypeFilter.Add(".jpg");
+        picker.FileTypeFilter.Add(".jpeg");
+        picker.FileTypeFilter.Add(".png");
+        var file = await picker.PickSingleFileAsync();
+        if (file is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await using var stream = File.OpenRead(file.Path);
+            await AppServices.UserSessionService.SaveProfilePhotoAsync(stream, Path.GetExtension(file.Name));
+            await AppServices.WidgetRefreshService.RefreshAsync();
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "No se pudo guardar la imagen",
+                Content = ex.Message,
+                CloseButtonText = "Aceptar",
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+    }
+
+    private async void ClearProfilePhotoButton_Click(object sender, RoutedEventArgs e)
+    {
+        await AppServices.UserSessionService.ClearProfilePhotoAsync();
+        await AppServices.WidgetRefreshService.RefreshAsync();
+        await RefreshAsync();
+    }
+
+    private void UpdateSessionView(UserSession session, string? profilePhotoPath)
     {
         var culture = CultureInfo.CurrentCulture;
         var stateLabel = session.State switch
         {
             AuthenticationState.SignedIn => "Autenticado",
-            AuthenticationState.SignedOut => "Sin sesiÃ³n",
+            AuthenticationState.SignedOut => "Sin sesin",
             _ => "Desconocido"
         };
 
         AuthenticationStateTextBlock.Text = $"Estado: {stateLabel}";
         CurrentUserTextBlock.Text = session.IsAuthenticated
             ? $"Usuario: {session.User!.DisplayName}"
-            : "Usuario: â€”";
+            : "Usuario: ";
         SignedInAtTextBlock.Text = session.SignedInAtUtc.HasValue
-            ? $"SesiÃ³n iniciada: {session.SignedInAtUtc.Value.ToLocalTime().ToString("g", culture)}"
-            : "SesiÃ³n iniciada: â€”";
+            ? $"Sesin iniciada: {session.SignedInAtUtc.Value.ToLocalTime().ToString("g", culture)}"
+            : "Sesin iniciada: ";
 
         SignInButton.IsEnabled = !session.IsAuthenticated;
         SignOutButton.IsEnabled = session.IsAuthenticated;
+
+        ChooseProfilePhotoButton.IsEnabled = session.IsAuthenticated;
+        ClearProfilePhotoButton.IsEnabled = session.IsAuthenticated && profilePhotoPath is not null;
+
+        if (profilePhotoPath is not null)
+        {
+            var uri = new Uri("file:///" + profilePhotoPath.Replace('\\', '/'));
+            ProfilePhotoPreview.Source = new BitmapImage(uri);
+        }
+        else
+        {
+            ProfilePhotoPreview.Source = null;
+        }
     }
 
     private void UpdateTimeTrackingView(UserSession session, TimeTrackingSnapshot snapshot)
@@ -125,11 +186,11 @@ public sealed partial class MainWindow : Window
         StatusHeadlineTextBlock.Text = BuildStatusHeadline(snapshot);
         StatusDetailTextBlock.Text = BuildStatusDetail(snapshot);
         LastActionTextBlock.Text = snapshot.LastAction == TimeTrackingAction.None
-            ? "ï¿½ltima acciï¿½n: Sin acciones todavï¿½a"
-            : $"ï¿½ltima acciï¿½n: {TranslateAction(snapshot.LastAction)}";
+            ? "ltima accin: Sin acciones todava"
+            : $"ltima accin: {TranslateAction(snapshot.LastAction)}";
         LastActionTimeTextBlock.Text = snapshot.LastActionAtUtc.HasValue
             ? $"Hora: {snapshot.LastActionAtUtc.Value.ToLocalTime().ToString("g", culture)}"
-            : "Hora: ï¿½";
+            : "Hora: ";
 
         LastCompletedShiftDurationTextBlock.Text = FormatDuration(snapshot.Summary.LastCompletedShiftWorkedDuration);
         WorkedThisMonthDurationTextBlock.Text = FormatDuration(snapshot.Summary.WorkedThisMonthDuration);
@@ -154,7 +215,7 @@ public sealed partial class MainWindow : Window
         {
             TimelinePanel.Children.Add(new TextBlock
             {
-                Text = "Todavï¿½a no hay hitos registrados hoy.",
+                Text = "Todava no hay hitos registrados hoy.",
                 Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 92, 92, 92)),
                 TextWrapping = TextWrapping.WrapWholeWords
             });
@@ -206,8 +267,8 @@ public sealed partial class MainWindow : Window
         snapshot.Status switch
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
-            TimeTrackingStatus.Working => "ï¿½Estï¿½s trabajando!",
-            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de cafï¿½",
+            TimeTrackingStatus.Working => "Ests trabajando!",
+            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de caf",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",
             TimeTrackingStatus.OffDuty => "Fuera de jornada",
@@ -217,9 +278,9 @@ public sealed partial class MainWindow : Window
     private static string BuildStatusDetail(TimeTrackingSnapshot snapshot) =>
         snapshot.ActiveBreak switch
         {
-            { IsActive: true, Type: BreakType.Coffee } => $"CafÃ© activo Â· {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            { IsActive: true, Type: BreakType.Food } => $"Comida activa Â· {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            _ => $"Jornada actual Â· {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
+            { IsActive: true, Type: BreakType.Coffee } => $"Caf activo  {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            { IsActive: true, Type: BreakType.Food } => $"Comida activa  {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            _ => $"Jornada actual  {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
         };
 
     private static string TranslateAction(TimeTrackingAction action) =>
@@ -228,8 +289,8 @@ public sealed partial class MainWindow : Window
             TimeTrackingAction.ClockIn => "Entrada",
             TimeTrackingAction.StartBreak => "Iniciar descanso",
             TimeTrackingAction.EndBreak => "Reanudar",
-            TimeTrackingAction.StartCoffeeBreak => "Iniciar cafï¿½",
-            TimeTrackingAction.EndCoffeeBreak => "Finalizar cafï¿½",
+            TimeTrackingAction.StartCoffeeBreak => "Iniciar caf",
+            TimeTrackingAction.EndCoffeeBreak => "Finalizar caf",
             TimeTrackingAction.StartFoodBreak => "Iniciar comida",
             TimeTrackingAction.EndFoodBreak => "Finalizar comida",
             TimeTrackingAction.ClockOut => "Salida",
@@ -240,7 +301,7 @@ public sealed partial class MainWindow : Window
         item.EventType switch
         {
             WorkdayEventType.ClockIn => "Entrada",
-            WorkdayEventType.StartCoffeeBreak => "Cafï¿½",
+            WorkdayEventType.StartCoffeeBreak => "Caf",
             WorkdayEventType.EndCoffeeBreak => "Reanudar",
             WorkdayEventType.StartFoodBreak => "Comida",
             WorkdayEventType.EndFoodBreak => "Reanudar",

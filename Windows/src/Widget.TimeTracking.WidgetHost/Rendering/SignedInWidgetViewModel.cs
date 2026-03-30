@@ -7,6 +7,7 @@ internal sealed record SignedInWidgetViewModel(
     string CustomState,
     string SurfaceColorHex,
     string AccentColorHex,
+    string ProfilePhotoUrl,
     string DisplayName,
     string StatusHeadline,
     string StatusDetail,

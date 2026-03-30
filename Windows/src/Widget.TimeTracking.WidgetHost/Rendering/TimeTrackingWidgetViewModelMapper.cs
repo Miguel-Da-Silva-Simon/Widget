@@ -37,6 +37,7 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         var availableActions = resolvedSnapshot.AvailableActions.ToHashSet();
         var culture = CultureInfo.CurrentCulture;
         var displayName = session.User?.DisplayName;
+        var profilePhotoUrl = await _userSessionService.GetProfilePhotoDataUriAsync(cancellationToken) ?? string.Empty;
         var activeBreakType = resolvedSnapshot.ActiveBreakType;
         var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
             ? FormatDurationWithSeconds(resolvedSnapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
@@ -47,6 +48,7 @@ internal sealed class TimeTrackingWidgetViewModelMapper
             CustomState: $"{resolvedSnapshot.Status}:{resolvedSnapshot.ActiveBreakType}",
             SurfaceColorHex: BrandColors.White,
             AccentColorHex: BrandColors.PrimaryBlue,
+            ProfilePhotoUrl: profilePhotoUrl,
             DisplayName: string.IsNullOrWhiteSpace(displayName) ? "Usuario autenticado" : displayName,
             StatusHeadline: BuildStatusHeadline(resolvedSnapshot),
             StatusDetail: BuildStatusDetail(resolvedSnapshot),

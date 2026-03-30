@@ -35,6 +35,8 @@ public sealed class MockAuthenticationService : IAuthenticationService
             SignedInAtUtc = DateTimeOffset.UtcNow
         };
 
+        TryCarryOverProfilePhoto(document);
+
         await SaveAsync(document, cancellationToken);
 
         return new UserSession(
@@ -43,15 +45,77 @@ public sealed class MockAuthenticationService : IAuthenticationService
             document.SignedInAtUtc);
     }
 
-    public Task SignOutAsync(CancellationToken cancellationToken = default) =>
-        SaveAsync(new UserSessionDocument
+    public async Task SignOutAsync(CancellationToken cancellationToken = default)
+    {
+        await DeleteStoredProfilePhotoIfAnyAsync(cancellationToken);
+        await SaveAsync(new UserSessionDocument
         {
             State = AuthenticationState.SignedOut,
             SignedInAtUtc = null,
             UserId = null,
             DisplayName = null,
-            Email = null
+            Email = null,
+            ProfilePhotoFileName = null
         }, cancellationToken);
+    }
+
+    private void TryCarryOverProfilePhoto(UserSessionDocument incoming)
+    {
+        if (!File.Exists(_options.SessionFullPath))
+        {
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(_options.SessionFullPath);
+            var previous = JsonSerializer.Deserialize<UserSessionDocument>(json, _serializerOptions);
+            if (string.IsNullOrWhiteSpace(previous?.ProfilePhotoFileName))
+            {
+                return;
+            }
+
+            var path = Path.Combine(_options.StorageDirectory, previous.ProfilePhotoFileName);
+            if (File.Exists(path))
+            {
+                incoming.ProfilePhotoFileName = previous.ProfilePhotoFileName;
+            }
+        }
+        catch (JsonException)
+        {
+            // Ignorar sesión previa corrupta.
+        }
+    }
+
+    private async Task DeleteStoredProfilePhotoIfAnyAsync(CancellationToken cancellationToken)
+    {
+        if (!File.Exists(_options.SessionFullPath))
+        {
+            return;
+        }
+
+        try
+        {
+            await using var stream = File.OpenRead(_options.SessionFullPath);
+            var previous = await JsonSerializer.DeserializeAsync<UserSessionDocument>(
+                stream,
+                _serializerOptions,
+                cancellationToken);
+            if (string.IsNullOrWhiteSpace(previous?.ProfilePhotoFileName))
+            {
+                return;
+            }
+
+            var path = Path.Combine(_options.StorageDirectory, previous.ProfilePhotoFileName);
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+        }
+    }
 
     private static CurrentUser CreateLocalMockUser()
     {

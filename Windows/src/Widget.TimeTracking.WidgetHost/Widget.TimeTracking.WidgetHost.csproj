@@ -17,4 +17,8 @@
     <ProjectReference Include="..\Widget.TimeTracking.Infrastructure.Mock\Widget.TimeTracking.Infrastructure.Mock.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Rendering\gradient-bg.png" />
+  </ItemGroup>
+
 </Project>

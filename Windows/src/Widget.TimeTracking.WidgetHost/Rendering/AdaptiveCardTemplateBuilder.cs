@@ -5,9 +5,8 @@ namespace Widget.TimeTracking.WidgetHost.Rendering;
 
 internal static class AdaptiveCardTemplateBuilder
 {
-    /// <summary>Fondo de la tarjeta completa: rectángulo blanco sin redondeo (sin transparencia en esquinas; evita el marco gris del host).</summary>
-    private const string WhiteFillBg =
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FFFFFF'/%3E%3C/svg%3E";
+    /// <summary>Fondo de la tarjeta: gradiente lineal vertical azul → blanco (imagen embebida).</summary>
+    private static readonly string WhiteFillBg = LoadEmbeddedPngAsDataUri("Widget.TimeTracking.WidgetHost.Rendering.gradient-bg.png");
 
     /// <summary>Píldora del contador: blanco con esquinas redondeadas (solo en el bloque del timer).</summary>
     private const string WhiteCardBg =
@@ -16,6 +15,7 @@ internal static class AdaptiveCardTemplateBuilder
     #region Composite button SVGs (background rect + white icon baked into one SVG)
 
     // Each button is a 44x44 SVG with a rounded-rect fill and the icon paths centered inside.
+    // Café: margen 4 a la izquierda del icono → translate(12,7) en lugar de (8,7) como comida.
     // This avoids backgroundImage issues in the widget host and guarantees no deformation.
 
     private static readonly string EntryBlue = SvgDataUri(
@@ -49,7 +49,7 @@ internal static class AdaptiveCardTemplateBuilder
     private static readonly string CoffeeBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
         + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
-        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -61,7 +61,7 @@ internal static class AdaptiveCardTemplateBuilder
     private static readonly string CoffeeBreak = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
         + "<rect width='44' height='44' rx='12' fill='#B8D0F0'/>"
-        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -73,7 +73,7 @@ internal static class AdaptiveCardTemplateBuilder
     private static readonly string CoffeeDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
         + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
-        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -165,6 +165,16 @@ internal static class AdaptiveCardTemplateBuilder
           "bleed": true,
           "style": "default",
           "items": [
+            {
+              "type": "Image",
+              "$when": "${hasProfilePhoto}",
+              "url": "${profilePhotoUrl}",
+              "horizontalAlignment": "center",
+              "width": "72px",
+              "height": "72px",
+              "style": "person",
+              "spacing": "medium"
+            },
             {
               "type": "TextBlock",
               "text": "${title}",
@@ -433,86 +443,100 @@ internal static class AdaptiveCardTemplateBuilder
     private static string SvgDataUri(string svg) =>
         "data:image/svg+xml," + Uri.EscapeDataString(svg);
 
-    public static string BuildData(TimeTrackingWidgetViewModel viewModel)
+    private static string LoadEmbeddedPngAsDataUri(string resourceName)
     {
-        var payload = viewModel switch
+        using var stream = typeof(AdaptiveCardTemplateBuilder).Assembly
+            .GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
+        using var ms = new System.IO.MemoryStream();
+        stream.CopyTo(ms);
+        return "data:image/png;base64," + Convert.ToBase64String(ms.ToArray());
+    }
+
+    public static string BuildData(TimeTrackingWidgetViewModel viewModel) =>
+        viewModel switch
         {
-            SignedOutWidgetViewModel signedOut => new
-            {
-                signedOut.Title,
-                signedOut.CustomState,
-                signedOut.SurfaceColorHex,
-                signedOut.AccentColorHex,
-                IsSignedOut = true,
-                IsSignedIn = false,
-                signedOut.Message,
-                signedOut.PrimaryActionLabel,
-                DisplayName = string.Empty,
-                StatusHeadline = string.Empty,
-                StatusDetail = string.Empty,
-                SessionCounter = "00:00:00",
-                LastAction = string.Empty,
-                LastActionTime = string.Empty,
-                LastCompletedShiftDuration = string.Empty,
-                WorkedThisMonthDuration = string.Empty,
-                CoffeeTodayDuration = string.Empty,
-                FoodTodayDuration = string.Empty,
-                TimelineText = string.Empty,
-                CoffeeVerb = "start-coffee-break",
-                FoodVerb = "start-food-break",
-                ShowEntryButton = false,
-                ShowClockOutButton = false,
-                ShowClockOutDisabled = false,
-                ShowCoffeeActive = false,
-                ShowCoffeeEndBreak = false,
-                ShowCoffeeDisabled = false,
-                ShowFoodActive = false,
-                ShowFoodEndBreak = false,
-                ShowFoodDisabled = false
-            },
-            SignedInWidgetViewModel signedIn => new
-            {
-                signedIn.Title,
-                signedIn.CustomState,
-                signedIn.SurfaceColorHex,
-                signedIn.AccentColorHex,
-                IsSignedOut = false,
-                IsSignedIn = true,
-                Message = string.Empty,
-                PrimaryActionLabel = string.Empty,
-                signedIn.DisplayName,
-                signedIn.StatusHeadline,
-                signedIn.StatusDetail,
-                signedIn.SessionCounter,
-                signedIn.LastAction,
-                signedIn.LastActionTime,
-                signedIn.LastCompletedShiftDuration,
-                signedIn.WorkedThisMonthDuration,
-                signedIn.CoffeeTodayDuration,
-                signedIn.FoodTodayDuration,
-                signedIn.TimelineText,
-                CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
-                    ? "end-coffee-break" : "start-coffee-break",
-                FoodVerb = signedIn.ActiveBreakType == BreakType.Food
-                    ? "end-food-break" : "start-food-break",
-                ShowEntryButton = signedIn.CanClockIn,
-                ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
-                ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
-                ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
-                ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
-                ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food
-                    || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartCoffeeBreak)
-                    || (signedIn.ActiveBreakType == BreakType.Coffee && !signedIn.CanEndCoffeeBreak),
-                ShowFoodActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartFoodBreak,
-                ShowFoodEndBreak = signedIn.ActiveBreakType == BreakType.Food && signedIn.CanEndFoodBreak,
-                ShowFoodDisabled = signedIn.ActiveBreakType == BreakType.Coffee
-                    || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartFoodBreak)
-                    || (signedIn.ActiveBreakType == BreakType.Food && !signedIn.CanEndFoodBreak)
-            },
+            SignedOutWidgetViewModel signedOut => JsonSerializer.Serialize(
+                new
+                {
+                    signedOut.Title,
+                    signedOut.CustomState,
+                    signedOut.SurfaceColorHex,
+                    signedOut.AccentColorHex,
+                    IsSignedOut = true,
+                    IsSignedIn = false,
+                    signedOut.Message,
+                    signedOut.PrimaryActionLabel,
+                    DisplayName = string.Empty,
+                    StatusHeadline = string.Empty,
+                    StatusDetail = string.Empty,
+                    SessionCounter = "00:00:00",
+                    LastAction = string.Empty,
+                    LastActionTime = string.Empty,
+                    LastCompletedShiftDuration = string.Empty,
+                    WorkedThisMonthDuration = string.Empty,
+                    CoffeeTodayDuration = string.Empty,
+                    FoodTodayDuration = string.Empty,
+                    TimelineText = string.Empty,
+                    CoffeeVerb = "start-coffee-break",
+                    FoodVerb = "start-food-break",
+                    ShowEntryButton = false,
+                    ShowClockOutButton = false,
+                    ShowClockOutDisabled = false,
+                    ShowCoffeeActive = false,
+                    ShowCoffeeEndBreak = false,
+                    ShowCoffeeDisabled = false,
+                    ShowFoodActive = false,
+                    ShowFoodEndBreak = false,
+                    ShowFoodDisabled = false,
+                    HasProfilePhoto = false,
+                    ProfilePhotoUrl = string.Empty
+                },
+                SerializerOptions),
+            SignedInWidgetViewModel signedIn => JsonSerializer.Serialize(
+                new
+                {
+                    signedIn.Title,
+                    signedIn.CustomState,
+                    signedIn.SurfaceColorHex,
+                    signedIn.AccentColorHex,
+                    IsSignedOut = false,
+                    IsSignedIn = true,
+                    Message = string.Empty,
+                    PrimaryActionLabel = string.Empty,
+                    HasProfilePhoto = !string.IsNullOrEmpty(signedIn.ProfilePhotoUrl),
+                    ProfilePhotoUrl = signedIn.ProfilePhotoUrl,
+                    signedIn.DisplayName,
+                    signedIn.StatusHeadline,
+                    signedIn.StatusDetail,
+                    signedIn.SessionCounter,
+                    signedIn.LastAction,
+                    signedIn.LastActionTime,
+                    signedIn.LastCompletedShiftDuration,
+                    signedIn.WorkedThisMonthDuration,
+                    signedIn.CoffeeTodayDuration,
+                    signedIn.FoodTodayDuration,
+                    signedIn.TimelineText,
+                    CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
+                        ? "end-coffee-break" : "start-coffee-break",
+                    FoodVerb = signedIn.ActiveBreakType == BreakType.Food
+                        ? "end-food-break" : "start-food-break",
+                    ShowEntryButton = signedIn.CanClockIn,
+                    ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
+                    ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
+                    ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
+                    ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
+                    ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food
+                        || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartCoffeeBreak)
+                        || (signedIn.ActiveBreakType == BreakType.Coffee && !signedIn.CanEndCoffeeBreak),
+                    ShowFoodActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartFoodBreak,
+                    ShowFoodEndBreak = signedIn.ActiveBreakType == BreakType.Food && signedIn.CanEndFoodBreak,
+                    ShowFoodDisabled = signedIn.ActiveBreakType == BreakType.Coffee
+                        || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartFoodBreak)
+                        || (signedIn.ActiveBreakType == BreakType.Food && !signedIn.CanEndFoodBreak)
+                },
+                SerializerOptions),
             _ => throw new InvalidOperationException(
                 $"Unsupported widget view model type: {viewModel.GetType().Name}")
         };
-
-        return JsonSerializer.Serialize(payload, SerializerOptions);
-    }
 }

@@ -13,4 +13,7 @@ public sealed class UserSessionDocument
     public string? Email { get; set; }
 
     public DateTimeOffset? SignedInAtUtc { get; set; }
+
+    /// <summary>Nombre de archivo en el directorio de estado local (p. ej. profile-avatar.png).</summary>
+    public string? ProfilePhotoFileName { get; set; }
 }
