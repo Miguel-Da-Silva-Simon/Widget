@@ -28,8 +28,10 @@ import com.example.widget_android.widget.FichajeWidgetUpdater
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,15 +60,15 @@ private fun AppRoot() {
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        var restored = repository.restoreSession()
+        var restored = withContext(Dispatchers.IO) { repository.restoreSession() }
         if (restored.isFailure) {
             val e = restored.exceptionOrNull()
             if (e is SocketTimeoutException || e is ConnectException) {
                 delay(250)
-                restored = repository.restoreSession()
+                restored = withContext(Dispatchers.IO) { repository.restoreSession() }
             }
         }
-        token = session.readToken()
+        token = withContext(Dispatchers.IO) { session.readToken() }
         TokenHolder.token = token
         bootstrapped = true
         var lastWidgetToken: String? = null
