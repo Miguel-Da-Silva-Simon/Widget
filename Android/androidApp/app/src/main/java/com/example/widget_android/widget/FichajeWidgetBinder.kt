@@ -72,7 +72,7 @@ internal object FichajeWidgetBinder {
     private fun applySignedOutState(views: RemoteViews) {
         views.setTextViewText(R.id.widget_name, "Conecta la app")
         views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
-        views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
+        views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
         views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
         views.setTextViewText(R.id.widget_status_title, "Inicia sesion")
         views.setTextViewText(R.id.widget_status_subtitle, "Usa la app para activar el widget")
@@ -103,7 +103,7 @@ internal object FichajeWidgetBinder {
     private fun applyErrorState(views: RemoteViews) {
         views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
         views.setTextViewText(R.id.widget_chronometer, "--:--:--")
-        views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
+        views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
         views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
         views.setTextViewText(R.id.widget_status_title, "No se pudo actualizar")
         views.setTextViewText(R.id.widget_status_subtitle, "Abre la app para volver a sincronizar")
@@ -161,7 +161,7 @@ internal object FichajeWidgetBinder {
 
         when (state.currentState) {
             AttendanceState.BREAK_ACTIVE -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_amber)
                 if (breakStartMs > 0L) {
                     views.setTextViewText(
@@ -174,7 +174,7 @@ internal object FichajeWidgetBinder {
                 }
             }
             AttendanceState.MEAL_ACTIVE -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_orange)
                 if (mealStartMs > 0L) {
                     views.setTextViewText(
@@ -187,12 +187,12 @@ internal object FichajeWidgetBinder {
                 }
             }
             AttendanceState.WORKING -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_green)
                 views.setViewVisibility(R.id.widget_return_hint, View.GONE)
             }
             else -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
                 views.setViewVisibility(R.id.widget_return_hint, View.GONE)
             }

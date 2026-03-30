@@ -266,17 +266,20 @@ fun DashboardScreen(
         val hiSalida = salidaHit && nextAction == AttendanceAction.CLOCK_OUT
 
         Column(modifier = Modifier.fillMaxWidth()) {
+            val timerShape = RoundedCornerShape(10.dp)
+            val timerBorder = BorderStroke(1.dp, Color(0xFFD2ECFF))
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(6.dp, RoundedCornerShape(999.dp)),
-                shape = RoundedCornerShape(999.dp),
+                    .shadow(6.dp, timerShape),
+                shape = timerShape,
                 color = timerCapsuleColor,
+                border = timerBorder,
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                    modifier = Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(

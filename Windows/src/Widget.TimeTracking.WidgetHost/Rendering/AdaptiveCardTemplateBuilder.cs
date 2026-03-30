@@ -5,17 +5,20 @@ namespace Widget.TimeTracking.WidgetHost.Rendering;
 
 internal static class AdaptiveCardTemplateBuilder
 {
-    /// <summary>Fondo de la tarjeta: gradiente lineal vertical azul → blanco (imagen embebida).</summary>
-    private static readonly string WhiteFillBg = LoadEmbeddedPngAsDataUri("Widget.TimeTracking.WidgetHost.Rendering.gradient-bg.png");
+    /// <summary>Fondo de la tarjeta del widget (color plano #F4F9FD, data URI SVG para el host de widgets).</summary>
+    private static readonly string WidgetCardSurfaceBg = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800'><rect width='400' height='800' fill='#F4F9FD'/></svg>");
 
-    /// <summary>Píldora del contador: blanco con esquinas redondeadas (solo en el bloque del timer).</summary>
-    private const string WhiteCardBg =
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect width='160' height='160' rx='24' fill='%23FFFFFF'/%3E%3C/svg%3E";
+    /// <summary>Fondo del cronómetro: rect redondeado con trazo interior al viewBox (evita clipping del host). Proporción ~barra; stretch en contenedor auto.</summary>
+    private static readonly string WhiteCardBg = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='48' viewBox='0 0 240 48'>"
+        + "<rect x='0.5' y='0.5' width='239' height='47' rx='10' ry='10' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
+        + "</svg>");
 
     #region Composite button SVGs (background rect + white icon baked into one SVG)
 
     // Each button is a 44x44 SVG with a rounded-rect fill and the icon paths centered inside.
-    // Café: margen 4 a la izquierda del icono → translate(12,7) en lugar de (8,7) como comida.
+    // Café: margen 2 a la izquierda del icono → translate(10,7) en lugar de (8,7) como comida.
     // This avoids backgroundImage issues in the widget host and guarantees no deformation.
 
     private static readonly string EntryBlue = SvgDataUri(
@@ -156,7 +159,7 @@ internal static class AdaptiveCardTemplateBuilder
       "version": "1.5",
       "padding": "none",
       "backgroundImage": {
-        "url": "{{WhiteFillBg}}",
+        "url": "{{WidgetCardSurfaceBg}}",
         "fillMode": "cover"
       },
       "body": [
@@ -217,24 +220,36 @@ internal static class AdaptiveCardTemplateBuilder
             {
               "type": "ColumnSet",
               "$when": "${isSignedIn}",
-              "spacing": "medium",
+              "spacing": "large",
+              "verticalContentAlignment": "center",
               "columns": [
                 {
                   "type": "Column",
-                  "width": "stretch",
+                  "width": "auto",
+                  "verticalContentAlignment": "center",
                   "items": [
                     {
                       "type": "Container",
-                      "backgroundImage": { "url": "{{WhiteCardBg}}", "fillMode": "cover" },
+                      "backgroundImage": { "url": "{{WhiteCardBg}}", "fillMode": "stretch" },
                       "style": "default",
+                      "minHeight": "44px",
+                      "verticalContentAlignment": "center",
+                      "padding": {
+                        "top": "8px",
+                        "bottom": "8px",
+                        "left": "12px",
+                        "right": "12px"
+                      },
                       "items": [
                         {
                           "type": "TextBlock",
                           "text": "• ${sessionCounter}",
                           "size": "large",
                           "weight": "bolder",
+                          "fontType": "monospace",
                           "wrap": false,
-                          "color": "dark"
+                          "color": "dark",
+                          "horizontalAlignment": "center"
                         }
                       ]
                     }
@@ -426,7 +441,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string CompileTemplate() =>
         RawTemplate
-            .Replace("{{WhiteFillBg}}", WhiteFillBg)
+            .Replace("{{WidgetCardSurfaceBg}}", WidgetCardSurfaceBg)
             .Replace("{{WhiteCardBg}}", WhiteCardBg)
             .Replace("{{EntryBlue}}", EntryBlue)
             .Replace("{{EntryDisabled}}", EntryDisabled)
@@ -442,16 +457,6 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string SvgDataUri(string svg) =>
         "data:image/svg+xml," + Uri.EscapeDataString(svg);
-
-    private static string LoadEmbeddedPngAsDataUri(string resourceName)
-    {
-        using var stream = typeof(AdaptiveCardTemplateBuilder).Assembly
-            .GetManifestResourceStream(resourceName)
-            ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
-        using var ms = new System.IO.MemoryStream();
-        stream.CopyTo(ms);
-        return "data:image/png;base64," + Convert.ToBase64String(ms.ToArray());
-    }
 
     public static string BuildData(TimeTrackingWidgetViewModel viewModel) =>
         viewModel switch
