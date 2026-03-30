@@ -53,6 +53,7 @@ import com.example.widget_android.data.AttendanceAction
 import com.example.widget_android.data.AttendanceDurations
 import com.example.widget_android.data.AttendanceState
 import com.example.widget_android.data.AttendanceTimeUtils
+import com.example.widget_android.data.canChangeMode
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
@@ -268,6 +269,7 @@ fun DashboardScreen(
         val hiBreak = coffeeHit && nextAction == actions.breakAction
         val hiMeal = mealHit && nextAction == actions.mealAction
         val hiSalida = salidaHit && nextAction == actions.clockOutAction
+        val canChangeMode = s.canChangeMode()
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Surface(
@@ -450,7 +452,7 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "Con comida",
                 selected = s.mode == ClockingMode.WITH_MEAL,
-                enabled = !s.isFinished,
+                enabled = canChangeMode,
                 onClick = {
                     scope.launch {
                         repository.setMode(ClockingMode.WITH_MEAL).fold(
@@ -467,7 +469,7 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "2 descansos",
                 selected = s.mode == ClockingMode.TWO_BREAKS,
-                enabled = !s.isFinished,
+                enabled = canChangeMode,
                 onClick = {
                     scope.launch {
                         repository.setMode(ClockingMode.TWO_BREAKS).fold(

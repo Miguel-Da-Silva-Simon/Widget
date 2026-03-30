@@ -51,3 +51,8 @@ data class ClockingState(
     /** Segundos desde entrada hasta ahora (o hasta salida); incluye descanso y comida. */
     val elapsedSeconds: Long = 0
 )
+
+fun ClockingState.canChangeMode(): Boolean =
+    !isFinished &&
+        currentState == AttendanceState.NOT_STARTED &&
+        currentStepIndex == 0

@@ -68,13 +68,16 @@ class TokenRefreshAuthenticator(
             )
         }
 
-        return response.request.newBuilder()
-            .removeHeader("Authorization")
-            .header(HEADER_AUTH_RETRY, "1")
-            .build()
+        return buildRetryRequest(response.request, body.token)
     }
 
     companion object {
-        private const val HEADER_AUTH_RETRY = "X-Auth-Retry"
+        internal const val HEADER_AUTH_RETRY = "X-Auth-Retry"
+
+        internal fun buildRetryRequest(request: Request, refreshedToken: String): Request =
+            request.newBuilder()
+                .header("Authorization", "Bearer $refreshedToken")
+                .header(HEADER_AUTH_RETRY, "1")
+                .build()
     }
 }

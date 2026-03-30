@@ -85,11 +85,12 @@ internal sealed class WidgetRefreshService
                 IsSignedIn = false,
                 HasProfilePhoto = false,
                 ProfilePhotoUrl = string.Empty,
-                Message = "Inici sesin en la app para fichar con tu cuenta.",
+                Message = "Inicia sesion en la app para fichar con tu cuenta.",
                 PrimaryActionLabel = "Abrir app",
                 DisplayName = string.Empty,
                 StatusHeadline = string.Empty,
                 StatusDetail = string.Empty,
+                SessionCounter = "00:00:00",
                 LastAction = string.Empty,
                 LastActionTime = string.Empty,
                 LastCompletedShiftDuration = string.Empty,
@@ -97,17 +98,38 @@ internal sealed class WidgetRefreshService
                 CoffeeTodayDuration = string.Empty,
                 FoodTodayDuration = string.Empty,
                 TimelineText = string.Empty,
-                CanClockIn = false,
-                CanStartCoffeeBreak = false,
-                CanEndCoffeeBreak = false,
-                CanStartFoodBreak = false,
-                CanEndFoodBreak = false,
-                CanClockOut = false
+                CoffeeVerb = "start-coffee-break",
+                FoodVerb = "start-food-break",
+                ShowEntryButton = false,
+                ShowClockOutButton = false,
+                ShowClockOutDisabled = false,
+                ShowCoffeeActive = false,
+                ShowCoffeeEndBreak = false,
+                ShowCoffeeDisabled = false,
+                ShowFoodActive = false,
+                ShowFoodEndBreak = false,
+                ShowFoodDisabled = false
             }, SerializerOptions);
         }
 
         var availableActions = snapshot.AvailableActions.ToHashSet();
         var culture = CultureInfo.CurrentCulture;
+        var activeBreakType = snapshot.ActiveBreakType;
+        var canClockIn = availableActions.Contains(TimeTrackingAction.ClockIn);
+        var canStartCoffeeBreak =
+            availableActions.Contains(TimeTrackingAction.StartCoffeeBreak)
+            || availableActions.Contains(TimeTrackingAction.StartBreak);
+        var canEndCoffeeBreak =
+            availableActions.Contains(TimeTrackingAction.EndCoffeeBreak)
+            || (activeBreakType == BreakType.Coffee && availableActions.Contains(TimeTrackingAction.EndBreak));
+        var canStartFoodBreak = availableActions.Contains(TimeTrackingAction.StartFoodBreak);
+        var canEndFoodBreak =
+            availableActions.Contains(TimeTrackingAction.EndFoodBreak)
+            || (activeBreakType == BreakType.Food && availableActions.Contains(TimeTrackingAction.EndBreak));
+        var canClockOut = availableActions.Contains(TimeTrackingAction.ClockOut);
+        var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
+            ? FormatDurationWithSeconds(snapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
+            : FormatDurationWithSeconds(snapshot.Summary.CurrentShiftWorkedDuration);
 
         return JsonSerializer.Serialize(new
         {
@@ -124,23 +146,37 @@ internal sealed class WidgetRefreshService
             DisplayName = string.IsNullOrWhiteSpace(session.User?.DisplayName) ? "Usuario autenticado" : session.User.DisplayName,
             StatusHeadline = BuildStatusHeadline(snapshot),
             StatusDetail = BuildStatusDetail(snapshot),
+            SessionCounter = sessionCounter,
             LastAction = snapshot.LastAction == TimeTrackingAction.None
-                ? "Sin acciones todava"
+                ? "Sin acciones todavia"
                 : TranslateAction(snapshot.LastAction),
             LastActionTime = snapshot.LastActionAtUtc.HasValue
                 ? snapshot.LastActionAtUtc.Value.ToLocalTime().ToString("g", culture)
-                : "",
+                : "--",
             LastCompletedShiftDuration = FormatDuration(snapshot.Summary.LastCompletedShiftWorkedDuration),
             WorkedThisMonthDuration = FormatDuration(snapshot.Summary.WorkedThisMonthDuration),
             CoffeeTodayDuration = FormatDuration(snapshot.Summary.CoffeeBreakDurationToday),
             FoodTodayDuration = FormatDuration(snapshot.Summary.FoodBreakDurationToday),
             TimelineText = BuildTimelineText(snapshot, culture),
-            CanClockIn = availableActions.Contains(TimeTrackingAction.ClockIn),
-            CanStartCoffeeBreak = availableActions.Contains(TimeTrackingAction.StartCoffeeBreak) || availableActions.Contains(TimeTrackingAction.StartBreak),
-            CanEndCoffeeBreak = availableActions.Contains(TimeTrackingAction.EndCoffeeBreak) || (snapshot.ActiveBreakType == BreakType.Coffee && availableActions.Contains(TimeTrackingAction.EndBreak)),
-            CanStartFoodBreak = availableActions.Contains(TimeTrackingAction.StartFoodBreak),
-            CanEndFoodBreak = availableActions.Contains(TimeTrackingAction.EndFoodBreak),
-            CanClockOut = availableActions.Contains(TimeTrackingAction.ClockOut)
+            CoffeeVerb = activeBreakType == BreakType.Coffee
+                ? "end-coffee-break"
+                : "start-coffee-break",
+            FoodVerb = activeBreakType == BreakType.Food
+                ? "end-food-break"
+                : "start-food-break",
+            ShowEntryButton = canClockIn,
+            ShowClockOutButton = activeBreakType == BreakType.None && canClockOut,
+            ShowClockOutDisabled = activeBreakType != BreakType.None,
+            ShowCoffeeActive = activeBreakType == BreakType.None && canStartCoffeeBreak,
+            ShowCoffeeEndBreak = activeBreakType == BreakType.Coffee && canEndCoffeeBreak,
+            ShowCoffeeDisabled = activeBreakType == BreakType.Food
+                || (activeBreakType == BreakType.None && !canStartCoffeeBreak)
+                || (activeBreakType == BreakType.Coffee && !canEndCoffeeBreak),
+            ShowFoodActive = activeBreakType == BreakType.None && canStartFoodBreak,
+            ShowFoodEndBreak = activeBreakType == BreakType.Food && canEndFoodBreak,
+            ShowFoodDisabled = activeBreakType == BreakType.Coffee
+                || (activeBreakType == BreakType.None && !canStartFoodBreak)
+                || (activeBreakType == BreakType.Food && !canEndFoodBreak)
         }, SerializerOptions);
     }
 
@@ -148,30 +184,30 @@ internal sealed class WidgetRefreshService
         snapshot.Status switch
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
-            TimeTrackingStatus.Working => "Ests trabajando",
-            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de caf",
+            TimeTrackingStatus.Working => "Estas trabajando",
+            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de cafe",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",
-            TimeTrackingStatus.OffDuty => "Fuera de jornada",
+            TimeTrackingStatus.OffDuty => "Jornada finalizada",
             _ => snapshot.Status.ToString()
         };
 
     private static string BuildStatusDetail(TimeTrackingSnapshot snapshot) =>
         snapshot.ActiveBreak switch
         {
-            { IsActive: true, Type: BreakType.Coffee } => $"Caf activo  {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            { IsActive: true, Type: BreakType.Food } => $"Comida activa  {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            _ => $"Jornada actual  {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
+            { IsActive: true, Type: BreakType.Coffee } => $"Cafe activo - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            { IsActive: true, Type: BreakType.Food } => $"Comida activa - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            _ => $"Jornada actual - {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
         };
 
     private static string TranslateAction(TimeTrackingAction action) =>
         action switch
         {
             TimeTrackingAction.ClockIn => "Entrada",
-            TimeTrackingAction.StartBreak => "Iniciar descanso",
-            TimeTrackingAction.EndBreak => "Reanudar",
-            TimeTrackingAction.StartCoffeeBreak => "Iniciar caf",
-            TimeTrackingAction.EndCoffeeBreak => "Finalizar caf",
+            TimeTrackingAction.StartBreak => "Iniciar cafe",
+            TimeTrackingAction.EndBreak => "Finalizar descanso",
+            TimeTrackingAction.StartCoffeeBreak => "Iniciar cafe",
+            TimeTrackingAction.EndCoffeeBreak => "Finalizar cafe",
             TimeTrackingAction.StartFoodBreak => "Iniciar comida",
             TimeTrackingAction.EndFoodBreak => "Finalizar comida",
             TimeTrackingAction.ClockOut => "Salida",
@@ -182,10 +218,10 @@ internal sealed class WidgetRefreshService
     {
         if (snapshot.WorkdayEvents.Count == 0)
         {
-            return "Todava no hay hitos registrados hoy.";
+            return "Todavia no hay hitos registrados hoy.";
         }
 
-        return string.Join("  ", snapshot.WorkdayEvents.Select(item =>
+        return string.Join(" | ", snapshot.WorkdayEvents.Select(item =>
             $"{item.OccurredAtUtc.ToLocalTime().ToString("HH:mm", culture)} {TranslateEvent(item)}"));
     }
 
@@ -193,7 +229,7 @@ internal sealed class WidgetRefreshService
         item.EventType switch
         {
             WorkdayEventType.ClockIn => "Entrada",
-            WorkdayEventType.StartCoffeeBreak => "Caf",
+            WorkdayEventType.StartCoffeeBreak => "Cafe",
             WorkdayEventType.EndCoffeeBreak => "Reanudar",
             WorkdayEventType.StartFoodBreak => "Comida",
             WorkdayEventType.EndFoodBreak => "Reanudar",
@@ -205,5 +241,11 @@ internal sealed class WidgetRefreshService
     {
         var totalHours = (int)value.TotalHours;
         return $"{totalHours:00}h {value.Minutes:00}m";
+    }
+
+    private static string FormatDurationWithSeconds(TimeSpan value)
+    {
+        var totalHours = (int)value.TotalHours;
+        return $"{totalHours:00}:{value.Minutes:00}:{value.Seconds:00}";
     }
 }

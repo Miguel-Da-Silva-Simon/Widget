@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import com.example.widget_android.R
 import com.example.widget_android.data.AttendanceAction
 import com.example.widget_android.data.AttendanceDurations
@@ -61,7 +62,7 @@ internal object FichajeWidgetBinder {
         val actions = state.resolveActionBindings()
 
         applyTimer(views, state)
-        applySummary(views, state, breakStartMs, mealStartMs)
+        applySummary(views, app, state, breakStartMs, mealStartMs)
         applyActions(views, state, actions)
         bindClicks(
             app,
@@ -153,6 +154,7 @@ internal object FichajeWidgetBinder {
 
     private fun applySummary(
         views: RemoteViews,
+        context: Context,
         state: ClockingState,
         breakStartMs: Long,
         mealStartMs: Long
@@ -162,16 +164,36 @@ internal object FichajeWidgetBinder {
         views.setTextViewText(R.id.widget_metric_last_value, lastMetric(state))
         views.setTextViewText(R.id.widget_metric_next_value, nextMetric(state))
         views.setTextViewText(R.id.widget_metric_mode_value, modeMetric(state.mode))
+        views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
+        views.setInt(
+            R.id.widget_return_hint,
+            "setTextColor",
+            ContextCompat.getColor(context, R.color.sygna_blue)
+        )
+        views.setInt(R.id.widget_return_hint, "setBackgroundResource", 0)
+        views.setViewPadding(R.id.widget_return_hint, 0, 0, 0, 0)
 
         when (state.currentState) {
             AttendanceState.BREAK_ACTIVE -> {
                 views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_amber)
+                views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster_break)
                 if (breakStartMs > 0L) {
                     views.setTextViewText(
                         R.id.widget_return_hint,
                         "Vuelves " + AttendanceTimeUtils.formatClockHHmm(breakStartMs + AttendanceDurations.BREAK_MS)
                     )
+                    views.setInt(
+                        R.id.widget_return_hint,
+                        "setBackgroundResource",
+                        R.drawable.bg_return_hint_break
+                    )
+                    views.setInt(
+                        R.id.widget_return_hint,
+                        "setTextColor",
+                        ContextCompat.getColor(context, R.color.widget_break_hint_text)
+                    )
+                    views.setViewPadding(R.id.widget_return_hint, 10, 5, 10, 5)
                     views.setViewVisibility(R.id.widget_return_hint, View.VISIBLE)
                 } else {
                     views.setViewVisibility(R.id.widget_return_hint, View.GONE)
