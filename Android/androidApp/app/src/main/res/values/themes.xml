@@ -1,3 +1,8 @@
 <resources>
-    <style name="Theme.Widget_android" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Widget_android" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/gray_100</item>
+        <item name="android:colorBackground">@color/gray_100</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/gray_100</item>
+    </style>
 </resources>

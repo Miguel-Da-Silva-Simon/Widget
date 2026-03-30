@@ -1,6 +1,10 @@
 Android/.gradle-android/
 Android/.gradle-backend/
+Android/.gradle/
+Android/.kotlin/
 Android/.idea/
+Android/build/
+Android/local.properties
 Android/androidApp/.idea/
 Android/androidApp/.kotlin/
 .DS_Store
