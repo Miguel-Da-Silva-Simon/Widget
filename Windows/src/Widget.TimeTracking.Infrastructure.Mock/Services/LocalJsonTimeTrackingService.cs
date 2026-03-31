@@ -196,11 +196,52 @@ public sealed class LocalJsonTimeTrackingService : ITimeTrackingService
 
     private static IReadOnlyList<BreakSession> GetBreakSessionsForSummary(TimeTrackingStateDocument document, DateOnly currentDay)
     {
-        var breakSessions = document.CurrentShiftStartedAtUtc.HasValue
-            ? document.BreakSessions.Where(session => session.StartedAtUtc >= document.CurrentShiftStartedAtUtc.Value)
-            : document.BreakSessions.Where(session => DateOnly.FromDateTime(session.StartedAtUtc.LocalDateTime) == currentDay);
+        // Si hay una jornada activa, usamos todos los descansos de la jornada actual (desde el último ClockIn).
+        if (document.CurrentShiftStartedAtUtc.HasValue)
+        {
+            return document.BreakSessions
+                .Where(session => session.StartedAtUtc >= document.CurrentShiftStartedAtUtc.Value)
+                .OrderBy(session => session.StartedAtUtc)
+                .ToArray();
+        }
 
-        return breakSessions
+        // Si no hay jornada activa (después de un ClockOut), queremos solo los descansos
+        // correspondientes a la última jornada completada del día actual.
+        var lastClockOutToday = document.WorkdayEvents
+            .Where(item =>
+                DateOnly.FromDateTime(item.OccurredAtUtc.LocalDateTime) == currentDay
+                && item.EventType == WorkdayEventType.ClockOut)
+            .OrderBy(item => item.OccurredAtUtc)
+            .LastOrDefault();
+
+        if (lastClockOutToday is not null)
+        {
+            var lastClockInForLastShift = document.WorkdayEvents
+                .Where(item =>
+                    DateOnly.FromDateTime(item.OccurredAtUtc.LocalDateTime) == currentDay
+                    && item.EventType == WorkdayEventType.ClockIn
+                    && item.OccurredAtUtc <= lastClockOutToday.OccurredAtUtc)
+                .OrderBy(item => item.OccurredAtUtc)
+                .LastOrDefault();
+
+            if (lastClockInForLastShift is not null)
+            {
+                var shiftStartUtc = lastClockInForLastShift.OccurredAtUtc;
+                var shiftEndUtc = lastClockOutToday.OccurredAtUtc;
+
+                return document.BreakSessions
+                    .Where(session =>
+                        session.StartedAtUtc >= shiftStartUtc &&
+                        session.StartedAtUtc <= shiftEndUtc)
+                    .OrderBy(session => session.StartedAtUtc)
+                    .ToArray();
+            }
+        }
+
+        // Fallback: si no encontramos una jornada delimitada, mantenemos el comportamiento
+        // original sumando los descansos del día actual.
+        return document.BreakSessions
+            .Where(session => DateOnly.FromDateTime(session.StartedAtUtc.LocalDateTime) == currentDay)
             .OrderBy(session => session.StartedAtUtc)
             .ToArray();
     }
