@@ -9,7 +9,10 @@ internal static class AdaptiveCardTemplateBuilder
 {
     /// <summary>Fondo de la tarjeta del widget (color plano #F4F9FD, data URI SVG para el host de widgets).</summary>
     private static readonly string WidgetCardSurfaceBg = SvgDataUri(
-        "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800'><rect width='400' height='800' fill='#F4F9FD'/></svg>");
+        "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800'>"
+        + "<rect width='400' height='800' fill='#F4F9FD'/>"
+        + "<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>"
+        + "</svg>");
 
     #region Composite button SVGs (background rect + white icon baked into one SVG)
 
@@ -174,18 +177,16 @@ internal static class AdaptiveCardTemplateBuilder
               "spacing": "medium"
             },
             {
-              "type": "TextBlock",
-              "text": "${title}",
-              "weight": "bolder",
-              "size": "medium",
-              "color": "dark",
-              "wrap": true
+              "type": "Container",
+              "$when": "${isSignedIn}",
+              "spacing": "none",
+              "minHeight": "15px"
             },
             {
               "type": "TextBlock",
               "$when": "${isSignedIn}",
               "text": "${displayName}",
-              "spacing": "small",
+              "spacing": "none",
               "weight": "bolder",
               "color": "dark",
               "wrap": true
