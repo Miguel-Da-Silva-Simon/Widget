@@ -58,17 +58,16 @@
     <LinearLayout
         android:id="@+id/widget_timer_block"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/bg_timer_capsule"
         android:baselineAligned="false"
         android:gravity="center_vertical"
-        android:minHeight="52dp"
         android:orientation="horizontal"
         android:paddingStart="8dp"
-        android:paddingTop="6dp"
+        android:paddingTop="4dp"
         android:paddingEnd="6dp"
-        android:paddingBottom="6dp">
+        android:paddingBottom="4dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -102,65 +101,85 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_action_cluster"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="3dp"
-            android:paddingTop="3dp"
-            android:paddingEnd="3dp"
-            android:paddingBottom="3dp">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="2dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="2dp"
+            android:paddingBottom="2dp">
 
-            <FrameLayout
-                android:id="@+id/widget_btn_primary"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:clickable="true"
-                android:contentDescription="@string/widget_cd_primary"
-                android:focusable="true">
+            <TextView
+                android:id="@+id/widget_return_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="1dp"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/text_secondary"
+                android:textSize="9sp"
+                android:visibility="gone" />
 
-                <ImageView
-                    android:id="@+id/widget_icon_primary"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_action_button_disabled"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter" />
-            </FrameLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <FrameLayout
-                android:id="@+id/widget_btn_break"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:clickable="true"
-                android:contentDescription="@string/widget_cd_descanso"
-                android:focusable="true">
+                <FrameLayout
+                    android:id="@+id/widget_btn_primary"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_cd_primary"
+                    android:focusable="true">
 
-                <ImageView
-                    android:id="@+id/widget_icon_break"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_action_button_disabled"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter" />
-            </FrameLayout>
+                    <ImageView
+                        android:id="@+id/widget_icon_primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_action_button_disabled"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
 
-            <FrameLayout
-                android:id="@+id/widget_btn_meal"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:clickable="true"
-                android:contentDescription="@string/widget_cd_comida"
-                android:focusable="true">
+                <FrameLayout
+                    android:id="@+id/widget_btn_break"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="3dp"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_cd_descanso"
+                    android:focusable="true">
 
-                <ImageView
-                    android:id="@+id/widget_icon_meal"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_action_button_disabled"
-                    android:padding="7dp"
-                    android:scaleType="fitCenter" />
-            </FrameLayout>
+                    <ImageView
+                        android:id="@+id/widget_icon_break"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_action_button_disabled"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/widget_btn_meal"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="3dp"
+                    android:clickable="true"
+                    android:contentDescription="@string/widget_cd_comida"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/widget_icon_meal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_action_button_disabled"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

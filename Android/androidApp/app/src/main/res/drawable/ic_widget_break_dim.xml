@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="15"
+    android:viewportHeight="15">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M1.25,8.46812V6.54812C1.25,5.08812 2.43,3.91812 3.88,3.91812H8.49C9.95,3.91812 11.12,5.09812 11.12,6.54812V11.1281C11.12,12.5881 9.94,13.7581 8.49,13.7581H3.88C2.43,13.7581 1.25,12.5781 1.25,11.1281"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M3.44,1.96811V1.40811"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M5.94,1.96811V1.40811"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M8.44,1.96811V1.40811"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M13.75,8.22811C13.75,9.67811 12.57,10.8581 11.12,10.8581V5.59811C12.57,5.59811 13.75,6.77811 13.75,8.22811Z"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M1.25,7.5H10.9438"
+        android:strokeColor="@color/widget_action_disabled_stroke"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
+</vector>

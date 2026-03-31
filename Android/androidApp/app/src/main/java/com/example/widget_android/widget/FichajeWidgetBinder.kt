@@ -5,10 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
+import android.view.View
 import android.widget.RemoteViews
 import com.example.widget_android.R
 import com.example.widget_android.data.AttendanceAction
+import com.example.widget_android.data.AttendanceDurations
 import com.example.widget_android.data.AttendanceState
+import com.example.widget_android.data.AttendanceTimeUtils
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingActionBindings
 import com.example.widget_android.data.ClockingState
@@ -54,11 +57,13 @@ internal object FichajeWidgetBinder {
         }
 
         val actions = state.resolveActionBindings()
+        val returnHint = resolveReturnHint(repo, state)
 
         applyTimer(views, state)
         applyStateChrome(views, state)
+        applyReturnHint(views, returnHint)
         applyActions(views, state, actions)
-        applyAccessibility(views, state, actions)
+        applyAccessibility(views, state, actions, returnHint)
         bindClicks(
             app,
             views,
@@ -73,23 +78,24 @@ internal object FichajeWidgetBinder {
         views.setTextViewText(R.id.widget_name, "Conecta la app")
         applyInactiveTimer(views)
         applyDefaultChrome(views)
+        applyReturnHint(views, null)
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_entrada_dim
+            R.drawable.ic_widget_primary_start_dim
         )
         setActionAppearance(
             views,
             R.id.widget_icon_break,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_descanso_dim
+            R.drawable.ic_widget_break_dim
         )
         setActionAppearance(
             views,
             R.id.widget_icon_meal,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_comida_dim
+            R.drawable.ic_widget_meal_dim
         )
         applyStaticAccessibility(
             views = views,
@@ -104,23 +110,24 @@ internal object FichajeWidgetBinder {
         views.setTextViewText(R.id.widget_name, "Abre la app")
         applyInactiveTimer(views)
         applyDefaultChrome(views)
+        applyReturnHint(views, null)
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_entrada_dim
+            R.drawable.ic_widget_primary_start_dim
         )
         setActionAppearance(
             views,
             R.id.widget_icon_break,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_descanso_dim
+            R.drawable.ic_widget_break_dim
         )
         setActionAppearance(
             views,
             R.id.widget_icon_meal,
             R.drawable.bg_action_button_disabled,
-            R.drawable.ic_widget_comida_dim
+            R.drawable.ic_widget_meal_dim
         )
         applyStaticAccessibility(
             views = views,
@@ -180,10 +187,10 @@ internal object FichajeWidgetBinder {
             R.id.widget_icon_primary,
             backgroundFor(primaryEnabled, primaryHighlighted),
             when {
-                !primaryEnabled && primaryIsExit -> R.drawable.ic_widget_salida_dim
-                !primaryEnabled -> R.drawable.ic_widget_entrada_dim
-                primaryIsExit -> R.drawable.ic_widget_salida_white
-                else -> R.drawable.ic_widget_entrada_white
+                !primaryEnabled && primaryIsExit -> R.drawable.ic_widget_primary_stop_dim
+                !primaryEnabled -> R.drawable.ic_widget_primary_start_dim
+                primaryIsExit -> R.drawable.ic_widget_primary_stop_white
+                else -> R.drawable.ic_widget_primary_start_white
             }
         )
 
@@ -193,7 +200,7 @@ internal object FichajeWidgetBinder {
             views,
             R.id.widget_icon_break,
             backgroundFor(breakEnabled, breakHighlighted),
-            if (breakEnabled) R.drawable.ic_widget_descanso_white else R.drawable.ic_widget_descanso_dim
+            if (breakEnabled) R.drawable.ic_widget_break_white else R.drawable.ic_widget_break_dim
         )
 
         val mealEnabled = actions.mealEnabled
@@ -202,14 +209,15 @@ internal object FichajeWidgetBinder {
             views,
             R.id.widget_icon_meal,
             backgroundFor(mealEnabled, mealHighlighted),
-            if (mealEnabled) R.drawable.ic_widget_comida_white else R.drawable.ic_widget_comida_dim
+            if (mealEnabled) R.drawable.ic_widget_meal_white else R.drawable.ic_widget_meal_dim
         )
     }
 
     private fun applyAccessibility(
         views: RemoteViews,
         state: ClockingState,
-        actions: ClockingActionBindings
+        actions: ClockingActionBindings,
+        returnHint: String?
     ) {
         val primaryDescription =
             when (actions.widgetPrimaryAction) {
@@ -232,7 +240,14 @@ internal object FichajeWidgetBinder {
 
         applyStaticAccessibility(
             views = views,
-            timerDescription = "Contador. " + statusTitle(state),
+            timerDescription = buildString {
+                append("Contador. ")
+                append(statusTitle(state))
+                if (!returnHint.isNullOrBlank()) {
+                    append(". ")
+                    append(returnHint)
+                }
+            },
             primaryDescription = primaryDescription,
             breakDescription = breakDescription,
             mealDescription = mealDescription
@@ -258,6 +273,19 @@ internal object FichajeWidgetBinder {
         views.setTextViewText(R.id.widget_chronometer, INACTIVE_TIMER)
     }
 
+    private fun applyReturnHint(views: RemoteViews, text: String?) {
+        if (text.isNullOrBlank()) {
+            views.setViewVisibility(R.id.widget_return_time, View.GONE)
+            views.setTextViewText(R.id.widget_return_time, "")
+            views.setContentDescription(R.id.widget_return_time, "")
+            return
+        }
+
+        views.setTextViewText(R.id.widget_return_time, text)
+        views.setContentDescription(R.id.widget_return_time, text)
+        views.setViewVisibility(R.id.widget_return_time, View.VISIBLE)
+    }
+
     private fun applyDefaultChrome(views: RemoteViews) {
         views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
         views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
@@ -273,6 +301,32 @@ internal object FichajeWidgetBinder {
         views.setInt(iconId, "setBackgroundResource", backgroundId)
         views.setImageViewResource(iconId, iconRes)
     }
+
+    private suspend fun resolveReturnHint(
+        repo: ClockingApiRepository,
+        state: ClockingState
+    ): String? {
+        val returnAtMs =
+            when (state.currentState) {
+                AttendanceState.BREAK_ACTIVE -> {
+                    resolveStartMs(repo.readBreakStartMs(), state.lastActionTime)
+                        ?.plus(AttendanceDurations.BREAK_MS)
+                }
+                AttendanceState.MEAL_ACTIVE -> {
+                    resolveStartMs(repo.readMealStartMs(), state.lastActionTime)
+                        ?.plus(AttendanceDurations.MEAL_MS)
+                }
+                else -> null
+            }
+
+        return returnAtMs?.let {
+            "Vuelves a las ${AttendanceTimeUtils.formatClockHHmm(it)}"
+        }
+    }
+
+    private fun resolveStartMs(storedStartMs: Long, fallbackTime: String): Long? =
+        storedStartMs.takeIf { it > 0L }
+            ?: AttendanceTimeUtils.parseTodayHmToEpochMs(fallbackTime)
 
     private fun setButtonDescription(
         views: RemoteViews,
