@@ -127,9 +127,10 @@ internal sealed class WidgetRefreshService
             availableActions.Contains(TimeTrackingAction.EndFoodBreak)
             || (activeBreakType == BreakType.Food && availableActions.Contains(TimeTrackingAction.EndBreak));
         var canClockOut = availableActions.Contains(TimeTrackingAction.ClockOut);
+        var primaryDuration = ResolvePrimaryDuration(snapshot);
         var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
             ? FormatDurationWithSeconds(snapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
-            : FormatDurationWithSeconds(snapshot.Summary.CurrentShiftWorkedDuration);
+            : FormatDurationWithSeconds(NormalizeCounterDuration(snapshot, primaryDuration));
 
         return JsonSerializer.Serialize(new
         {
@@ -197,8 +198,22 @@ internal sealed class WidgetRefreshService
         {
             { IsActive: true, Type: BreakType.Coffee } => $"Cafe activo - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
             { IsActive: true, Type: BreakType.Food } => $"Comida activa - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            _ => $"Jornada actual - {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
+            _ when snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+                => $"Jornada actual - {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}",
+            _ => $"Ultima jornada - {FormatDuration(snapshot.Summary.LastCompletedShiftWorkedDuration)}"
         };
+
+    private static TimeSpan ResolvePrimaryDuration(TimeTrackingSnapshot snapshot) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? snapshot.Summary.CurrentShiftWorkedDuration
+            : snapshot.Summary.LastCompletedShiftWorkedDuration;
+
+    private static TimeSpan NormalizeCounterDuration(TimeTrackingSnapshot snapshot, TimeSpan value) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? value
+            : value < TimeSpan.FromMinutes(1)
+                ? TimeSpan.Zero
+                : value;
 
     private static string TranslateAction(TimeTrackingAction action) =>
         action switch

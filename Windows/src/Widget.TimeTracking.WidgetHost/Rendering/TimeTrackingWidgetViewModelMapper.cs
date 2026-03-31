@@ -42,9 +42,10 @@ internal sealed class TimeTrackingWidgetViewModelMapper
             : displayName.Trim();
         var profilePhotoUrl = await _userSessionService.GetProfilePhotoDataUriAsync(cancellationToken) ?? string.Empty;
         var activeBreakType = resolvedSnapshot.ActiveBreakType;
+        var primaryDuration = ResolvePrimaryDuration(resolvedSnapshot);
         var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
             ? FormatDurationWithSeconds(resolvedSnapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
-            : FormatDurationWithSeconds(resolvedSnapshot.Summary.CurrentShiftWorkedDuration);
+            : FormatDurationWithSeconds(NormalizeCounterDuration(resolvedSnapshot, primaryDuration));
 
         return new SignedInWidgetViewModel(
             Title: "Fichaje",
@@ -92,10 +93,24 @@ internal sealed class TimeTrackingWidgetViewModelMapper
     private static string BuildStatusDetail(TimeTrackingSnapshot snapshot) =>
         snapshot.ActiveBreak switch
         {
-            { IsActive: true, Type: BreakType.Coffee } => $"Café activo · {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            { IsActive: true, Type: BreakType.Food } => $"Comida activa · {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            _ => $"Jornada actual · {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
+            { IsActive: true, Type: BreakType.Coffee } => $"Cafe activo - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            { IsActive: true, Type: BreakType.Food } => $"Comida activa - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            _ when snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+                => $"Jornada actual - {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}",
+            _ => $"Ultima jornada - {FormatDuration(snapshot.Summary.LastCompletedShiftWorkedDuration)}"
         };
+
+    private static TimeSpan ResolvePrimaryDuration(TimeTrackingSnapshot snapshot) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? snapshot.Summary.CurrentShiftWorkedDuration
+            : snapshot.Summary.LastCompletedShiftWorkedDuration;
+
+    private static TimeSpan NormalizeCounterDuration(TimeTrackingSnapshot snapshot, TimeSpan value) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? value
+            : value < TimeSpan.FromMinutes(1)
+                ? TimeSpan.Zero
+                : value;
 
     private static string TranslateAction(TimeTrackingAction action) =>
         action switch
