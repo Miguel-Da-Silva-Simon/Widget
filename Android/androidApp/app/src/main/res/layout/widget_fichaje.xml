@@ -4,10 +4,10 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_widget_screen"
     android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingTop="15dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="15dp">
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,38 +17,41 @@
 
         <ImageView
             android:id="@+id/widget_brand_icon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:importantForAccessibility="no"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:layout_gravity="center_vertical"
+            android:importantForAccessibility="no"
             android:scaleType="fitCenter"
             android:src="@drawable/widget_brand_icon" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
                 android:text="@string/widget_title"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_name"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:ellipsize="end"
+                android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="Practicas"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -56,16 +59,16 @@
         android:id="@+id/widget_timer_block"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/bg_timer_capsule"
         android:baselineAligned="false"
         android:gravity="center_vertical"
-        android:minHeight="64dp"
+        android:minHeight="52dp"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="10dp">
+        android:paddingStart="8dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="6dp">
 
         <LinearLayout
             android:id="@+id/widget_timer_panel"
@@ -79,8 +82,8 @@
 
             <ImageView
                 android:id="@+id/widget_status_dot"
-                android:layout_width="9dp"
-                android:layout_height="9dp"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
                 android:background="@drawable/bg_dot_gray"
                 android:importantForAccessibility="no"
                 android:scaleType="fitXY" />
@@ -89,10 +92,11 @@
                 android:id="@+id/widget_chronometer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="9dp"
+                android:layout_marginStart="7dp"
                 android:fontFamily="monospace"
+                android:includeFontPadding="false"
                 android:textColor="@color/text_primary"
-                android:textSize="21sp"
+                android:textSize="19sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -103,15 +107,15 @@
             android:background="@drawable/bg_action_cluster"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="4dp">
+            android:paddingStart="3dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="3dp"
+            android:paddingBottom="3dp">
 
             <FrameLayout
                 android:id="@+id/widget_btn_primary"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:clickable="true"
                 android:contentDescription="@string/widget_cd_primary"
                 android:focusable="true">
@@ -121,15 +125,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_action_button_disabled"
-                    android:padding="8dp"
+                    android:padding="7dp"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
             <FrameLayout
                 android:id="@+id/widget_btn_break"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:layout_marginStart="6dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
                 android:clickable="true"
                 android:contentDescription="@string/widget_cd_descanso"
                 android:focusable="true">
@@ -139,15 +143,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_action_button_disabled"
-                    android:padding="8dp"
+                    android:padding="7dp"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
             <FrameLayout
                 android:id="@+id/widget_btn_meal"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:layout_marginStart="6dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
                 android:clickable="true"
                 android:contentDescription="@string/widget_cd_comida"
                 android:focusable="true">
@@ -157,132 +161,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_action_button_disabled"
-                    android:padding="8dp"
+                    android:padding="7dp"
                     android:scaleType="fitCenter" />
             </FrameLayout>
-        </LinearLayout>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/widget_status_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="Estas trabajando"
-        android:textColor="@color/text_primary"
-        android:textSize="17sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/widget_status_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="Jornada actual 00h 00m"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/widget_return_hint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/sygna_blue"
-        android:textSize="11sp"
-        android:visibility="gone" />
-
-    <LinearLayout
-        android:id="@+id/widget_metrics_row"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/widget_metric_last"
-                android:textColor="@color/text_secondary"
-                android:textSize="9sp" />
-
-            <TextView
-                android:id="@+id/widget_metric_last_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="--"
-                android:textColor="@color/text_primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/widget_metric_next"
-                android:textColor="@color/text_secondary"
-                android:textSize="9sp" />
-
-            <TextView
-                android:id="@+id/widget_metric_next_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Entrada"
-                android:textColor="@color/text_primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/widget_metric_mode"
-                android:textColor="@color/text_secondary"
-                android:textSize="9sp" />
-
-            <TextView
-                android:id="@+id/widget_metric_mode_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Con comida"
-                android:textColor="@color/text_primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

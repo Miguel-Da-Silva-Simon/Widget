@@ -5,23 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
-import android.view.View
 import android.widget.RemoteViews
-import androidx.core.content.ContextCompat
 import com.example.widget_android.R
 import com.example.widget_android.data.AttendanceAction
-import com.example.widget_android.data.AttendanceDurations
 import com.example.widget_android.data.AttendanceState
-import com.example.widget_android.data.AttendanceTimeUtils
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingActionBindings
-import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
 import com.example.widget_android.data.PrefKeys
 import com.example.widget_android.data.TokenHolder
 import com.example.widget_android.data.appDataStore
 import com.example.widget_android.data.resolveActionBindings
-import java.util.Locale
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -31,6 +25,8 @@ internal object FichajeWidgetBinder {
     private const val PI_BREAK = 302
     private const val PI_MEAL = 303
     private const val NOOP_ACTION = "NOOP"
+    private const val DEFAULT_USER_NAME = "Practicas"
+    private const val INACTIVE_TIMER = "--:--:--"
 
     suspend fun build(context: Context): RemoteViews {
         val app = context.applicationContext
@@ -38,10 +34,8 @@ internal object FichajeWidgetBinder {
 
         val token = app.appDataStore.data.map { it[PrefKeys.TOKEN] }.first()
         val userName = app.appDataStore.data.map { it[PrefKeys.USER_NAME] }.first().orEmpty()
-        val breakStartMs = app.appDataStore.data.map { it[PrefKeys.BREAK_START_MS] }.first() ?: -1L
-        val mealStartMs = app.appDataStore.data.map { it[PrefKeys.MEAL_START_MS] }.first() ?: -1L
 
-        views.setTextViewText(R.id.widget_name, userName.ifBlank { "Practicas" })
+        views.setTextViewText(R.id.widget_name, userName.ifBlank { DEFAULT_USER_NAME })
 
         if (token.isNullOrBlank()) {
             applySignedOutState(views)
@@ -62,8 +56,9 @@ internal object FichajeWidgetBinder {
         val actions = state.resolveActionBindings()
 
         applyTimer(views, state)
-        applySummary(views, app, state, breakStartMs, mealStartMs)
+        applyStateChrome(views, state)
         applyActions(views, state, actions)
+        applyAccessibility(views, state, actions)
         bindClicks(
             app,
             views,
@@ -76,15 +71,8 @@ internal object FichajeWidgetBinder {
 
     private fun applySignedOutState(views: RemoteViews) {
         views.setTextViewText(R.id.widget_name, "Conecta la app")
-        views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
-        views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
-        views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
-        views.setTextViewText(R.id.widget_status_title, "Inicia sesion")
-        views.setTextViewText(R.id.widget_status_subtitle, "Usa la app para activar el widget")
-        views.setViewVisibility(R.id.widget_return_hint, View.GONE)
-        views.setTextViewText(R.id.widget_metric_last_value, "--")
-        views.setTextViewText(R.id.widget_metric_next_value, "Entrar")
-        views.setTextViewText(R.id.widget_metric_mode_value, "--")
+        applyInactiveTimer(views)
+        applyDefaultChrome(views)
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
@@ -102,20 +90,20 @@ internal object FichajeWidgetBinder {
             R.id.widget_icon_meal,
             R.drawable.bg_action_button_disabled,
             R.drawable.ic_widget_comida_dim
+        )
+        applyStaticAccessibility(
+            views = views,
+            timerDescription = "Widget inactivo. Conecta la app.",
+            primaryDescription = "Entrada no disponible",
+            breakDescription = "Descanso no disponible",
+            mealDescription = "Comida no disponible"
         )
     }
 
     private fun applyErrorState(views: RemoteViews) {
-        views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
-        views.setTextViewText(R.id.widget_chronometer, "--:--:--")
-        views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
-        views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
-        views.setTextViewText(R.id.widget_status_title, "No se pudo actualizar")
-        views.setTextViewText(R.id.widget_status_subtitle, "Abre la app para volver a sincronizar")
-        views.setViewVisibility(R.id.widget_return_hint, View.GONE)
-        views.setTextViewText(R.id.widget_metric_last_value, "--")
-        views.setTextViewText(R.id.widget_metric_next_value, "Reintentar")
-        views.setTextViewText(R.id.widget_metric_mode_value, "--")
+        views.setTextViewText(R.id.widget_name, "Abre la app")
+        applyInactiveTimer(views)
+        applyDefaultChrome(views)
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
@@ -133,6 +121,13 @@ internal object FichajeWidgetBinder {
             R.id.widget_icon_meal,
             R.drawable.bg_action_button_disabled,
             R.drawable.ic_widget_comida_dim
+        )
+        applyStaticAccessibility(
+            views = views,
+            timerDescription = "Widget inactivo. Abre la app para sincronizar.",
+            primaryDescription = "Entrada no disponible",
+            breakDescription = "Descanso no disponible",
+            mealDescription = "Comida no disponible"
         )
     }
 
@@ -152,76 +147,23 @@ internal object FichajeWidgetBinder {
         }
     }
 
-    private fun applySummary(
-        views: RemoteViews,
-        context: Context,
-        state: ClockingState,
-        breakStartMs: Long,
-        mealStartMs: Long
-    ) {
-        views.setTextViewText(R.id.widget_status_title, statusTitle(state))
-        views.setTextViewText(R.id.widget_status_subtitle, statusSubtitle(state))
-        views.setTextViewText(R.id.widget_metric_last_value, lastMetric(state))
-        views.setTextViewText(R.id.widget_metric_next_value, nextMetric(state))
-        views.setTextViewText(R.id.widget_metric_mode_value, modeMetric(state.mode))
-        views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
-        views.setInt(
-            R.id.widget_return_hint,
-            "setTextColor",
-            ContextCompat.getColor(context, R.color.sygna_blue)
-        )
-        views.setInt(R.id.widget_return_hint, "setBackgroundResource", 0)
-        views.setViewPadding(R.id.widget_return_hint, 0, 0, 0, 0)
-
+    private fun applyStateChrome(views: RemoteViews, state: ClockingState) {
         when (state.currentState) {
             AttendanceState.BREAK_ACTIVE -> {
                 views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_amber)
                 views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster_break)
-                if (breakStartMs > 0L) {
-                    views.setTextViewText(
-                        R.id.widget_return_hint,
-                        "Vuelves " + AttendanceTimeUtils.formatClockHHmm(breakStartMs + AttendanceDurations.BREAK_MS)
-                    )
-                    views.setInt(
-                        R.id.widget_return_hint,
-                        "setBackgroundResource",
-                        R.drawable.bg_return_hint_break
-                    )
-                    views.setInt(
-                        R.id.widget_return_hint,
-                        "setTextColor",
-                        ContextCompat.getColor(context, R.color.widget_break_hint_text)
-                    )
-                    views.setViewPadding(R.id.widget_return_hint, 10, 5, 10, 5)
-                    views.setViewVisibility(R.id.widget_return_hint, View.VISIBLE)
-                } else {
-                    views.setViewVisibility(R.id.widget_return_hint, View.GONE)
-                }
             }
             AttendanceState.MEAL_ACTIVE -> {
                 views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_orange)
-                if (mealStartMs > 0L) {
-                    views.setTextViewText(
-                        R.id.widget_return_hint,
-                        "Vuelves " + AttendanceTimeUtils.formatClockHHmm(mealStartMs + AttendanceDurations.MEAL_MS)
-                    )
-                    views.setViewVisibility(R.id.widget_return_hint, View.VISIBLE)
-                } else {
-                    views.setViewVisibility(R.id.widget_return_hint, View.GONE)
-                }
+                views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
             }
             AttendanceState.WORKING -> {
-                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
+                applyDefaultChrome(views)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_green)
-                views.setViewVisibility(R.id.widget_return_hint, View.GONE)
             }
-            else -> {
-                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule)
-                views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
-                views.setViewVisibility(R.id.widget_return_hint, View.GONE)
-            }
+            else -> applyDefaultChrome(views)
         }
     }
 
@@ -230,7 +172,7 @@ internal object FichajeWidgetBinder {
         state: ClockingState,
         actions: ClockingActionBindings
     ) {
-        val primaryIsExit = actions.widgetPrimaryAction == AttendanceAction.CLOCK_OUT
+        val primaryIsExit = actions.widgetPrimaryAction == AttendanceAction.CLOCK_OUT || state.isFinished
         val primaryEnabled = actions.widgetPrimaryAction != null
         val primaryHighlighted = state.nextAllowedAction == actions.widgetPrimaryAction
         setActionAppearance(
@@ -264,6 +206,64 @@ internal object FichajeWidgetBinder {
         )
     }
 
+    private fun applyAccessibility(
+        views: RemoteViews,
+        state: ClockingState,
+        actions: ClockingActionBindings
+    ) {
+        val primaryDescription =
+            when (actions.widgetPrimaryAction) {
+                AttendanceAction.CLOCK_IN -> "Entrada"
+                AttendanceAction.CLOCK_OUT -> "Salida"
+                else -> if (state.isFinished) "Salida no disponible" else "Entrada no disponible"
+            }
+        val breakDescription =
+            when (actions.breakAction) {
+                AttendanceAction.BREAK_START -> "Iniciar descanso"
+                AttendanceAction.BREAK_END -> "Finalizar descanso"
+                else -> "Descanso no disponible"
+            }
+        val mealDescription =
+            when (actions.mealAction) {
+                AttendanceAction.MEAL_START -> "Iniciar comida"
+                AttendanceAction.MEAL_END -> "Finalizar comida"
+                else -> "Comida no disponible"
+            }
+
+        applyStaticAccessibility(
+            views = views,
+            timerDescription = "Contador. " + statusTitle(state),
+            primaryDescription = primaryDescription,
+            breakDescription = breakDescription,
+            mealDescription = mealDescription
+        )
+    }
+
+    private fun applyStaticAccessibility(
+        views: RemoteViews,
+        timerDescription: String,
+        primaryDescription: String,
+        breakDescription: String,
+        mealDescription: String
+    ) {
+        views.setContentDescription(R.id.widget_timer_block, timerDescription)
+        views.setContentDescription(R.id.widget_chronometer, timerDescription)
+        setButtonDescription(views, R.id.widget_btn_primary, R.id.widget_icon_primary, primaryDescription)
+        setButtonDescription(views, R.id.widget_btn_break, R.id.widget_icon_break, breakDescription)
+        setButtonDescription(views, R.id.widget_btn_meal, R.id.widget_icon_meal, mealDescription)
+    }
+
+    private fun applyInactiveTimer(views: RemoteViews) {
+        views.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), null, false)
+        views.setTextViewText(R.id.widget_chronometer, INACTIVE_TIMER)
+    }
+
+    private fun applyDefaultChrome(views: RemoteViews) {
+        views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
+        views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
+        views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
+    }
+
     private fun setActionAppearance(
         views: RemoteViews,
         iconId: Int,
@@ -272,6 +272,16 @@ internal object FichajeWidgetBinder {
     ) {
         views.setInt(iconId, "setBackgroundResource", backgroundId)
         views.setImageViewResource(iconId, iconRes)
+    }
+
+    private fun setButtonDescription(
+        views: RemoteViews,
+        buttonId: Int,
+        iconId: Int,
+        description: String
+    ) {
+        views.setContentDescription(buttonId, description)
+        views.setContentDescription(iconId, description)
     }
 
     private fun backgroundFor(enabled: Boolean, highlighted: Boolean): Int =
@@ -331,47 +341,4 @@ internal object FichajeWidgetBinder {
             AttendanceState.MEAL_ACTIVE -> "Estas en comida"
             AttendanceState.FINISHED -> "Jornada finalizada"
         }
-
-    private fun statusSubtitle(state: ClockingState): String =
-        when (state.currentState) {
-            AttendanceState.NOT_STARTED -> "Sin actividad hoy"
-            AttendanceState.FINISHED -> "Jornada cerrada " + formatHoursMinutes(state.elapsedSeconds)
-            else -> "Jornada actual " + formatHoursMinutes(state.elapsedSeconds)
-        }
-
-    private fun lastMetric(state: ClockingState): String =
-        if (state.lastActionTime == "--:--") {
-            "--"
-        } else {
-            shortLabel(state.lastActionLabel) + " " + state.lastActionTime
-        }
-
-    private fun nextMetric(state: ClockingState): String =
-        if (state.isFinished) {
-            "Completa"
-        } else {
-            shortLabel(state.nextStepLabel)
-        }
-
-    private fun modeMetric(mode: ClockingMode): String =
-        when (mode) {
-            ClockingMode.WITH_MEAL -> "Con comida"
-            ClockingMode.TWO_BREAKS -> "2 descansos"
-        }
-
-    private fun shortLabel(label: String): String =
-        when (label) {
-            "Inicio descanso", "Inicio descanso 1", "Inicio descanso 2" -> "Descanso"
-            "Fin descanso", "Fin descanso 1", "Fin descanso 2" -> "Fin descanso"
-            "Inicio comida" -> "Comida"
-            "Fin comida" -> "Fin comida"
-            "Jornada terminada" -> "Completa"
-            else -> label
-        }
-
-    private fun formatHoursMinutes(totalSeconds: Long): String {
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        return String.format(Locale.getDefault(), "%02dh %02dm", hours, minutes)
-    }
 }
