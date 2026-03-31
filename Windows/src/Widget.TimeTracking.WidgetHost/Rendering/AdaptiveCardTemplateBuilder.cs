@@ -220,7 +220,7 @@ internal static class AdaptiveCardTemplateBuilder
             {
               "type": "ColumnSet",
               "$when": "${isSignedIn}",
-              "spacing": "large",
+              "spacing": "medium",
               "verticalContentAlignment": "center",
               "columns": [
                 {
@@ -230,30 +230,46 @@ internal static class AdaptiveCardTemplateBuilder
                   "items": [
                     {
                       "type": "Container",
-                      "backgroundImage": { "url": "{{WhiteCardBg}}", "fillMode": "stretch" },
                       "style": "default",
-                      "minHeight": "44px",
-                      "verticalContentAlignment": "center",
                       "padding": {
-                        "top": "8px",
-                        "bottom": "8px",
-                        "left": "12px",
-                        "right": "12px"
+                        "top": "0px",
+                        "bottom": "0px",
+                        "left": "0px",
+                        "right": "34px"
                       },
                       "items": [
                         {
-                          "type": "TextBlock",
-                          "text": "• ${sessionCounter}",
-                          "size": "large",
-                          "weight": "bolder",
-                          "fontType": "monospace",
-                          "wrap": false,
-                          "color": "dark",
-                          "horizontalAlignment": "center"
+                          "type": "Container",
+                          "backgroundImage": { "url": "{{WhiteCardBg}}", "fillMode": "stretch" },
+                          "style": "default",
+                          "minHeight": "44px",
+                          "verticalContentAlignment": "center",
+                          "padding": {
+                            "top": "8px",
+                            "bottom": "8px",
+                            "left": "12px",
+                            "right": "12px"
+                          },
+                          "items": [
+                            {
+                              "type": "TextBlock",
+                              "text": "• ${sessionCounter}",
+                              "size": "large",
+                              "weight": "bolder",
+                              "fontType": "monospace",
+                              "wrap": false,
+                              "color": "dark",
+                              "horizontalAlignment": "center"
+                            }
+                          ]
                         }
                       ]
                     }
                   ]
+                },
+                {
+                  "type": "Column",
+                  "width": "stretch"
                 },
                 {
                   "type": "Column",
