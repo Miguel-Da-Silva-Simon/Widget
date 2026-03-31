@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Windows.Widgets.Providers;
 using Widget.TimeTracking.Core.Design;
@@ -10,10 +11,12 @@ namespace Widget.TimeTracking.App.Services;
 
 internal sealed class WidgetRefreshService
 {
+    private const int MaxInlineProfilePhotoUrlLength = 48 * 1024;
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+    private static readonly string DefaultWidgetCardSurfaceBg = BuildWidgetCardSurfaceBg();
 
     private readonly IUserSessionService _userSessionService;
     private readonly ITimeTrackingService _timeTrackingService;
@@ -83,6 +86,7 @@ internal sealed class WidgetRefreshService
                 AccentColorHex = BrandColors.PrimaryBlue,
                 IsSignedOut = true,
                 IsSignedIn = false,
+                WidgetCardSurfaceBg = DefaultWidgetCardSurfaceBg,
                 HasProfilePhoto = false,
                 ProfilePhotoUrl = string.Empty,
                 Message = "Inicia sesion en la app para fichar con tu cuenta.",
@@ -131,6 +135,7 @@ internal sealed class WidgetRefreshService
         var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
             ? FormatDurationWithSeconds(snapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
             : FormatDurationWithSeconds(NormalizeCounterDuration(snapshot, primaryDuration));
+        var safeProfilePhotoUrl = SanitizeProfilePhotoUrl(profilePhotoUrl);
 
         return JsonSerializer.Serialize(new
         {
@@ -140,8 +145,9 @@ internal sealed class WidgetRefreshService
             AccentColorHex = BrandColors.PrimaryBlue,
             IsSignedOut = false,
             IsSignedIn = true,
-            HasProfilePhoto = !string.IsNullOrEmpty(profilePhotoUrl),
-            ProfilePhotoUrl = profilePhotoUrl,
+            WidgetCardSurfaceBg = DefaultWidgetCardSurfaceBg,
+            HasProfilePhoto = !string.IsNullOrEmpty(safeProfilePhotoUrl),
+            ProfilePhotoUrl = safeProfilePhotoUrl,
             Message = string.Empty,
             PrimaryActionLabel = string.Empty,
             DisplayName = string.IsNullOrWhiteSpace(session.User?.DisplayName) ? "Usuario autenticado" : session.User.DisplayName,
@@ -179,6 +185,35 @@ internal sealed class WidgetRefreshService
                 || (activeBreakType == BreakType.None && !canStartFoodBreak)
                 || (activeBreakType == BreakType.Food && !canEndFoodBreak)
         }, SerializerOptions);
+    }
+
+    private static string BuildWidgetCardSurfaceBg()
+    {
+        var svg = new StringBuilder(256);
+        svg.Append("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800'>");
+        svg.Append("<rect width='400' height='800' fill='#F4F9FD'/>");
+        svg.Append("<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>");
+        svg.Append("</svg>");
+        return "data:image/svg+xml," + Uri.EscapeDataString(svg.ToString());
+    }
+
+    private static string SanitizeProfilePhotoUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        if ((value.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase)
+                || value.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase))
+            && value.Length <= MaxInlineProfilePhotoUrlLength)
+        {
+            return value;
+        }
+
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps
+            ? value
+            : string.Empty;
     }
 
     private static string BuildStatusHeadline(TimeTrackingSnapshot snapshot) =>

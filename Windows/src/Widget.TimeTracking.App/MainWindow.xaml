@@ -20,7 +20,7 @@
 
                         <StackPanel Spacing="10">
                             <TextBlock Text="Foto del widget" FontWeight="SemiBold" Foreground="#1F1F1F" />
-                            <TextBlock Text="Se muestra arriba y centrada en la tarjeta del widget (PNG o JPG, máx. 512 KB)." TextWrapping="Wrap" Foreground="#5C5C5C" FontSize="12" />
+                            <TextBlock Text="Se incrusta en la franja azul superior del widget, en una posición fija que no desplaza el resto de la plantilla (PNG o JPG, máx. 512 KB)." TextWrapping="Wrap" Foreground="#5C5C5C" FontSize="12" />
                             <Border
                                 Width="80"
                                 Height="80"
@@ -157,3 +157,4 @@
         </ScrollViewer>
     </Grid>
 </Window>
+

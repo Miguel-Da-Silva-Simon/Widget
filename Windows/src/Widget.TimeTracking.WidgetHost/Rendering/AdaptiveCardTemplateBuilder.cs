@@ -7,12 +7,8 @@ namespace Widget.TimeTracking.WidgetHost.Rendering;
 
 internal static class AdaptiveCardTemplateBuilder
 {
-    /// <summary>Fondo de la tarjeta del widget (color plano #F4F9FD, data URI SVG para el host de widgets).</summary>
-    private static readonly string WidgetCardSurfaceBg = SvgDataUri(
-        "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800'>"
-        + "<rect width='400' height='800' fill='#F4F9FD'/>"
-        + "<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>"
-        + "</svg>");
+    private const int MaxInlineProfilePhotoUrlLength = 48 * 1024;
+    private static readonly string DefaultWidgetCardSurfaceBg = BuildWidgetCardSurfaceBg();
 
     #region Composite button SVGs (background rect + white icon baked into one SVG)
 
@@ -157,7 +153,7 @@ internal static class AdaptiveCardTemplateBuilder
       "version": "1.5",
       "padding": "none",
       "backgroundImage": {
-        "url": "{{WidgetCardSurfaceBg}}",
+        "url": "${widgetCardSurfaceBg}",
         "fillMode": "cover"
       },
       "body": [
@@ -167,29 +163,60 @@ internal static class AdaptiveCardTemplateBuilder
           "style": "default",
           "items": [
             {
-              "type": "Image",
-              "$when": "${hasProfilePhoto}",
-              "url": "${profilePhotoUrl}",
-              "horizontalAlignment": "center",
-              "width": "72px",
-              "height": "72px",
-              "style": "person",
-              "spacing": "medium"
-            },
-            {
-              "type": "Container",
+              "type": "ColumnSet",
               "$when": "${isSignedIn}",
               "spacing": "none",
-              "minHeight": "15px"
-            },
-            {
-              "type": "TextBlock",
-              "$when": "${isSignedIn}",
-              "text": "${displayName}",
-              "spacing": "none",
-              "weight": "bolder",
-              "color": "dark",
-              "wrap": true
+              "verticalContentAlignment": "center",
+              "columns": [
+                {
+                  "type": "Column",
+                  "width": "stretch",
+                  "items": [
+                    {
+                      "type": "Container",
+                      "spacing": "none",
+                      "minHeight": "15px"
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "${displayName}",
+                      "spacing": "none",
+                      "weight": "bolder",
+                      "color": "dark",
+                      "wrap": true
+                    }
+                  ]
+                },
+                {
+                  "type": "Column",
+                  "width": "auto",
+                  "verticalContentAlignment": "center",
+                  "items": [
+                    {
+                      "type": "Container",
+                      "spacing": "none",
+                      "minHeight": "15px"
+                    },
+                    {
+                      "type": "Container",
+                      "$when": "${hasProfilePhoto}",
+                      "spacing": "none",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "${profilePhotoUrl}",
+                          "width": "32px",
+                          "height": "32px",
+                          "style": "person",
+                          "backgroundColor": "#FFFFFF",
+                          "horizontalAlignment": "right",
+                          "altText": "Foto de perfil"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             },
             {
               "type": "TextBlock",
@@ -439,7 +466,6 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string CompileTemplate() =>
         RawTemplate
-            .Replace("{{WidgetCardSurfaceBg}}", WidgetCardSurfaceBg)
             .Replace("{{EntryBlue}}", EntryBlue)
             .Replace("{{EntryDisabled}}", EntryDisabled)
             .Replace("{{StopBlue}}", StopBlue)
@@ -454,6 +480,35 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string SvgDataUri(string svg) =>
         "data:image/svg+xml," + Uri.EscapeDataString(svg);
+
+    private static string BuildWidgetCardSurfaceBg()
+    {
+        var svg = new StringBuilder(256);
+        svg.Append("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800'>");
+        svg.Append("<rect width='400' height='800' fill='#F4F9FD'/>");
+        svg.Append("<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>");
+        svg.Append("</svg>");
+        return SvgDataUri(svg.ToString());
+    }
+
+    private static string SanitizeProfilePhotoUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        if ((value.StartsWith("data:image/png;base64,", StringComparison.OrdinalIgnoreCase)
+                || value.StartsWith("data:image/jpeg;base64,", StringComparison.OrdinalIgnoreCase))
+            && value.Length <= MaxInlineProfilePhotoUrlLength)
+        {
+            return value;
+        }
+
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps
+            ? value
+            : string.Empty;
+    }
 
     private static string BuildTimerChipSvg(string sessionCounter)
     {
@@ -583,6 +638,7 @@ internal static class AdaptiveCardTemplateBuilder
                     IsSignedIn = false,
                     signedOut.Message,
                     signedOut.PrimaryActionLabel,
+                    WidgetCardSurfaceBg = DefaultWidgetCardSurfaceBg,
                     DisplayName = string.Empty,
                     StatusHeadline = string.Empty,
                     StatusDetail = string.Empty,
@@ -610,52 +666,60 @@ internal static class AdaptiveCardTemplateBuilder
                     ProfilePhotoUrl = string.Empty
                 },
                 SerializerOptions),
-            SignedInWidgetViewModel signedIn => JsonSerializer.Serialize(
-                new
-                {
-                    signedIn.Title,
-                    signedIn.CustomState,
-                    signedIn.SurfaceColorHex,
-                    signedIn.AccentColorHex,
-                    IsSignedOut = false,
-                    IsSignedIn = true,
-                    Message = string.Empty,
-                    PrimaryActionLabel = string.Empty,
-                    HasProfilePhoto = !string.IsNullOrEmpty(signedIn.ProfilePhotoUrl),
-                    ProfilePhotoUrl = signedIn.ProfilePhotoUrl,
-                    signedIn.DisplayName,
-                    signedIn.StatusHeadline,
-                    signedIn.StatusDetail,
-                    signedIn.SessionCounter,
-                    signedIn.LastAction,
-                    signedIn.LastActionTime,
-                    signedIn.LastCompletedShiftDuration,
-                    signedIn.WorkedThisMonthDuration,
-                    signedIn.CoffeeTodayDuration,
-                    signedIn.FoodTodayDuration,
-                    signedIn.TimelineText,
-                    TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter),
-                    CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
-                        ? "end-coffee-break" : "start-coffee-break",
-                    FoodVerb = signedIn.ActiveBreakType == BreakType.Food
-                        ? "end-food-break" : "start-food-break",
-                    ShowEntryButton = signedIn.CanClockIn,
-                    ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
-                    ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
-                    ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
-                    ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
-                    ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food
-                        || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartCoffeeBreak)
-                        || (signedIn.ActiveBreakType == BreakType.Coffee && !signedIn.CanEndCoffeeBreak),
-                    ShowFoodActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartFoodBreak,
-                    ShowFoodEndBreak = signedIn.ActiveBreakType == BreakType.Food && signedIn.CanEndFoodBreak,
-                    ShowFoodDisabled = signedIn.ActiveBreakType == BreakType.Coffee
-                        || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartFoodBreak)
-                        || (signedIn.ActiveBreakType == BreakType.Food && !signedIn.CanEndFoodBreak)
-                },
-                SerializerOptions),
+            SignedInWidgetViewModel signedIn => BuildSignedInData(signedIn),
             _ => throw new InvalidOperationException(
                 $"Unsupported widget view model type: {viewModel.GetType().Name}")
         };
+
+    private static string BuildSignedInData(SignedInWidgetViewModel signedIn)
+    {
+        var safeProfilePhotoUrl = SanitizeProfilePhotoUrl(signedIn.ProfilePhotoUrl);
+
+        return JsonSerializer.Serialize(
+            new
+            {
+                signedIn.Title,
+                signedIn.CustomState,
+                signedIn.SurfaceColorHex,
+                signedIn.AccentColorHex,
+                IsSignedOut = false,
+                IsSignedIn = true,
+                Message = string.Empty,
+                PrimaryActionLabel = string.Empty,
+                WidgetCardSurfaceBg = DefaultWidgetCardSurfaceBg,
+                HasProfilePhoto = !string.IsNullOrEmpty(safeProfilePhotoUrl),
+                ProfilePhotoUrl = safeProfilePhotoUrl,
+                signedIn.DisplayName,
+                signedIn.StatusHeadline,
+                signedIn.StatusDetail,
+                signedIn.SessionCounter,
+                signedIn.LastAction,
+                signedIn.LastActionTime,
+                signedIn.LastCompletedShiftDuration,
+                signedIn.WorkedThisMonthDuration,
+                signedIn.CoffeeTodayDuration,
+                signedIn.FoodTodayDuration,
+                signedIn.TimelineText,
+                TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter),
+                CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
+                    ? "end-coffee-break" : "start-coffee-break",
+                FoodVerb = signedIn.ActiveBreakType == BreakType.Food
+                    ? "end-food-break" : "start-food-break",
+                ShowEntryButton = signedIn.CanClockIn,
+                ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
+                ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
+                ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
+                ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
+                ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food
+                    || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartCoffeeBreak)
+                    || (signedIn.ActiveBreakType == BreakType.Coffee && !signedIn.CanEndCoffeeBreak),
+                ShowFoodActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartFoodBreak,
+                ShowFoodEndBreak = signedIn.ActiveBreakType == BreakType.Food && signedIn.CanEndFoodBreak,
+                ShowFoodDisabled = signedIn.ActiveBreakType == BreakType.Coffee
+                    || (signedIn.ActiveBreakType == BreakType.None && !signedIn.CanStartFoodBreak)
+                    || (signedIn.ActiveBreakType == BreakType.Food && !signedIn.CanEndFoodBreak)
+            },
+            SerializerOptions);
+    }
 }
 
