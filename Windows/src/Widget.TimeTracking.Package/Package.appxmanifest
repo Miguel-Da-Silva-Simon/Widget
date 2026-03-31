@@ -13,7 +13,7 @@
     Version="1.0.2.0" />
 
   <Properties>
-    <DisplayName>Widget TimeTracking</DisplayName>
+    <DisplayName>Sygna</DisplayName>
     <PublisherDisplayName>Widget TimeTracking</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -34,8 +34,8 @@
       Executable="Widget.TimeTracking.WidgetHost\Widget.TimeTracking.WidgetHost.exe"
       EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Fichaje (host widget)"
-        Description="Host del widget de fichaje"
+        DisplayName="Sygna (host widget)"
+        Description="Host del widget de Sygna"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -50,7 +50,7 @@
           </com:ComServer>
         </com:Extension>
         <uap3:Extension Category="windows.appExtension">
-          <uap3:AppExtension Name="com.microsoft.windows.widgets" DisplayName="Fichaje" Id="WidgetTimeTracking" PublicFolder="Public">
+          <uap3:AppExtension Name="com.microsoft.windows.widgets" DisplayName="Sygna" Id="WidgetTimeTracking" PublicFolder="Public">
             <uap3:Properties>
               <WidgetProvider>
                 <ProviderIcons>
@@ -62,8 +62,8 @@
                 <Definitions>
                   <Definition
                     Id="TimeTracking_Widget"
-                    DisplayName="Fichaje"
-                    Description="Fichaje laboral rápido con persistencia local mock"
+                    DisplayName="Sygna"
+                    Description="Sygna laboral rápido con persistencia local mock"
                     AllowMultiple="false">
                     <Capabilities>
                       <Capability>
@@ -81,7 +81,7 @@
                         <Icon Path="ProviderAssets\WidgetIcon.png" />
                       </Icons>
                       <Screenshots>
-                        <Screenshot Path="ProviderAssets\WidgetMedium.png" DisplayAltText="Vista media del widget de fichaje" />
+                        <Screenshot Path="ProviderAssets\WidgetMedium.png" DisplayAltText="Vista media del widget de Sygna" />
                       </Screenshots>
                     </ThemeResources>
                   </Definition>
@@ -98,8 +98,8 @@
       Executable="Widget.TimeTracking.App\Widget.TimeTracking.App.exe"
       EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Fichaje"
-        Description="App acompañante para sesión y diagnóstico del widget de fichaje"
+        DisplayName="Sygna"
+        Description="App acompañante para sesión y diagnóstico del widget de Sygna"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
