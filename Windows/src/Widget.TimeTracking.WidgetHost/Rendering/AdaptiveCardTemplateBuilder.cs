@@ -371,7 +371,7 @@ internal static class AdaptiveCardTemplateBuilder
                   "type": "Column",
                   "width": "stretch",
                   "items": [
-                    { "type": "TextBlock", "text": "Último fichaje", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
+                { "type": "TextBlock", "text": "Última jornada", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
                     { "type": "TextBlock", "text": "${lastCompletedShiftDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
                   ]
                 },
@@ -379,7 +379,7 @@ internal static class AdaptiveCardTemplateBuilder
                   "type": "Column",
                   "width": "stretch",
                   "items": [
-                    { "type": "TextBlock", "text": "Café hoy", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
+                    { "type": "TextBlock", "text": "Descanso", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
                     { "type": "TextBlock", "text": "${coffeeTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
                   ]
                 },
@@ -387,7 +387,7 @@ internal static class AdaptiveCardTemplateBuilder
                   "type": "Column",
                   "width": "stretch",
                   "items": [
-                    { "type": "TextBlock", "text": "Comida hoy", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
+                    { "type": "TextBlock", "text": "Comida", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
                     { "type": "TextBlock", "text": "${foodTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
                   ]
                 }

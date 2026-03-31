@@ -163,10 +163,7 @@ public sealed class LocalJsonTimeTrackingService : ITimeTrackingService
     {
         var currentDay = DateOnly.FromDateTime(nowUtc.LocalDateTime);
         var activeBreak = document.BreakSessions.LastOrDefault(session => session.IsActive);
-        var todayBreakSessions = document.BreakSessions
-            .Where(session => DateOnly.FromDateTime(session.StartedAtUtc.LocalDateTime) == currentDay)
-            .OrderBy(session => session.StartedAtUtc)
-            .ToArray();
+        var breakSessionsForSummary = GetBreakSessionsForSummary(document, currentDay);
         var todayEvents = document.WorkdayEvents
             .Where(item => DateOnly.FromDateTime(item.OccurredAtUtc.LocalDateTime) == currentDay)
             .OrderBy(item => item.OccurredAtUtc)
@@ -179,8 +176,8 @@ public sealed class LocalJsonTimeTrackingService : ITimeTrackingService
             CurrentShiftWorkedDuration: currentShiftWorked,
             LastCompletedShiftWorkedDuration: TimeSpan.FromSeconds(document.LastCompletedShiftWorkedSeconds),
             WorkedThisMonthDuration: TimeSpan.FromSeconds(document.WorkedThisMonthSeconds) + currentShiftWorked,
-            CoffeeBreakDurationToday: SumBreakDuration(todayBreakSessions, BreakType.Coffee, nowUtc),
-            FoodBreakDurationToday: SumBreakDuration(todayBreakSessions, BreakType.Food, nowUtc));
+            CoffeeBreakDurationToday: SumBreakDuration(breakSessionsForSummary, BreakType.Coffee, nowUtc),
+            FoodBreakDurationToday: SumBreakDuration(breakSessionsForSummary, BreakType.Food, nowUtc));
 
         return new TimeTrackingSnapshot(
             Status: document.Status,
@@ -192,9 +189,20 @@ public sealed class LocalJsonTimeTrackingService : ITimeTrackingService
                 .OrderByDescending(item => item.OccurredAtUtc)
                 .ToArray(),
             WorkdayEvents: todayEvents,
-            BreakSessions: todayBreakSessions,
+            BreakSessions: breakSessionsForSummary,
             Summary: summary,
             AvailableActions: TimeTrackingStateMachine.GetAvailableActions(document.Status, document.ActiveBreakType));
+    }
+
+    private static IReadOnlyList<BreakSession> GetBreakSessionsForSummary(TimeTrackingStateDocument document, DateOnly currentDay)
+    {
+        var breakSessions = document.CurrentShiftStartedAtUtc.HasValue
+            ? document.BreakSessions.Where(session => session.StartedAtUtc >= document.CurrentShiftStartedAtUtc.Value)
+            : document.BreakSessions.Where(session => DateOnly.FromDateTime(session.StartedAtUtc.LocalDateTime) == currentDay);
+
+        return breakSessions
+            .OrderBy(session => session.StartedAtUtc)
+            .ToArray();
     }
 
     private static TimeSpan SumBreakDuration(IEnumerable<BreakSession> sessions, BreakType type, DateTimeOffset nowUtc) =>

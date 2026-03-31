@@ -65,8 +65,8 @@ internal sealed class TimeTrackingWidgetViewModelMapper
             CurrentShiftDuration: FormatDuration(resolvedSnapshot.Summary.CurrentShiftWorkedDuration),
             LastCompletedShiftDuration: FormatDuration(resolvedSnapshot.Summary.LastCompletedShiftWorkedDuration),
             WorkedThisMonthDuration: FormatDuration(resolvedSnapshot.Summary.WorkedThisMonthDuration),
-            CoffeeTodayDuration: FormatDuration(resolvedSnapshot.Summary.CoffeeBreakDurationToday),
-            FoodTodayDuration: FormatDuration(resolvedSnapshot.Summary.FoodBreakDurationToday),
+            CoffeeTodayDuration: FormatBreakDuration(resolvedSnapshot.Summary.CoffeeBreakDurationToday),
+            FoodTodayDuration: FormatBreakDuration(resolvedSnapshot.Summary.FoodBreakDurationToday),
             TimelineText: BuildTimelineText(resolvedSnapshot, culture),
             ActiveBreakType: activeBreakType,
             CanClockIn: availableActions.Contains(TimeTrackingAction.ClockIn),
@@ -140,6 +140,9 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         var totalHours = (int)value.TotalHours;
         return $"{totalHours:00}h {value.Minutes:00}m";
     }
+
+    private static string FormatBreakDuration(TimeSpan value) =>
+        FormatDuration(value);
 
     private static string FormatDurationWithSeconds(TimeSpan value)
     {
