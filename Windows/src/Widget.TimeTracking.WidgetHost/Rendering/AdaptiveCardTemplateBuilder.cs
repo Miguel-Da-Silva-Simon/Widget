@@ -9,10 +9,10 @@ internal static class AdaptiveCardTemplateBuilder
     private static readonly string WidgetCardSurfaceBg = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800'><rect width='400' height='800' fill='#F4F9FD'/></svg>");
 
-    /// <summary>Fondo del cronómetro: rect redondeado con trazo interior al viewBox (evita clipping del host). Proporción ~barra; stretch en contenedor auto.</summary>
+    /// <summary>Fondo del cronómetro: cápsula SVG con el trazo más metido hacia dentro para que el host no aplaste/recorte el redondeo derecho al estirarla.</summary>
     private static readonly string WhiteCardBg = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='48' viewBox='0 0 240 48'>"
-        + "<rect x='0.5' y='0.5' width='239' height='47' rx='10' ry='10' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
+        + "<rect x='1.5' y='1.5' width='237' height='45' rx='12' ry='12' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
         + "</svg>");
 
     #region Composite button SVGs (background rect + white icon baked into one SVG)
@@ -225,18 +225,12 @@ internal static class AdaptiveCardTemplateBuilder
               "columns": [
                 {
                   "type": "Column",
-                  "width": "auto",
+                  "width": "stretch",
                   "verticalContentAlignment": "center",
                   "items": [
                     {
                       "type": "Container",
                       "style": "default",
-                      "padding": {
-                        "top": "0px",
-                        "bottom": "0px",
-                        "left": "0px",
-                        "right": "34px"
-                      },
                       "items": [
                         {
                           "type": "Container",
@@ -269,91 +263,100 @@ internal static class AdaptiveCardTemplateBuilder
                 },
                 {
                   "type": "Column",
-                  "width": "stretch"
-                },
-                {
-                  "type": "Column",
                   "width": "auto",
                   "items": [
                     {
-                      "type": "Container",
-                      "$when": "${showEntryButton}",
-                      "selectAction": { "type": "Action.Execute", "title": "Empezar jornada", "verb": "clock-in" },
-                      "items": [
-                        { "type": "Image", "url": "{{EntryBlue}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showClockOutButton}",
-                      "selectAction": { "type": "Action.Execute", "title": "Finalizar jornada", "verb": "clock-out" },
-                      "items": [
-                        { "type": "Image", "url": "{{StopBlue}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showClockOutDisabled}",
-                      "items": [
-                        { "type": "Image", "url": "{{StopDisabled}}", "width": "44px" }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "Column",
-                  "width": "auto",
-                  "items": [
-                    {
-                      "type": "Container",
-                      "$when": "${showCoffeeActive}",
-                      "selectAction": { "type": "Action.Execute", "title": "Descanso", "verb": "${coffeeVerb}" },
-                      "items": [
-                        { "type": "Image", "url": "{{CoffeeBlue}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showCoffeeEndBreak}",
-                      "selectAction": { "type": "Action.Execute", "title": "Fin descanso", "verb": "${coffeeVerb}" },
-                      "items": [
-                        { "type": "Image", "url": "{{CoffeeBreak}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showCoffeeDisabled}",
-                      "items": [
-                        { "type": "Image", "url": "{{CoffeeDisabled}}", "width": "44px" }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "Column",
-                  "width": "auto",
-                  "items": [
-                    {
-                      "type": "Container",
-                      "$when": "${showFoodActive}",
-                      "selectAction": { "type": "Action.Execute", "title": "Comida", "verb": "${foodVerb}" },
-                      "items": [
-                        { "type": "Image", "url": "{{FoodBlue}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showFoodEndBreak}",
-                      "selectAction": { "type": "Action.Execute", "title": "Fin comida", "verb": "${foodVerb}" },
-                      "items": [
-                        { "type": "Image", "url": "{{FoodBreak}}", "width": "44px" }
-                      ]
-                    },
-                    {
-                      "type": "Container",
-                      "$when": "${showFoodDisabled}",
-                      "items": [
-                        { "type": "Image", "url": "{{FoodDisabled}}", "width": "44px" }
+                      "type": "ColumnSet",
+                      "spacing": "none",
+                      "verticalContentAlignment": "center",
+                      "columns": [
+                        {
+                          "type": "Column",
+                          "width": "auto",
+                          "items": [
+                            {
+                              "type": "Container",
+                              "$when": "${showEntryButton}",
+                              "selectAction": { "type": "Action.Execute", "title": "Empezar jornada", "verb": "clock-in" },
+                              "items": [
+                                { "type": "Image", "url": "{{EntryBlue}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showClockOutButton}",
+                              "selectAction": { "type": "Action.Execute", "title": "Finalizar jornada", "verb": "clock-out" },
+                              "items": [
+                                { "type": "Image", "url": "{{StopBlue}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showClockOutDisabled}",
+                              "items": [
+                                { "type": "Image", "url": "{{StopDisabled}}", "width": "44px" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Column",
+                          "width": "auto",
+                          "items": [
+                            {
+                              "type": "Container",
+                              "$when": "${showCoffeeActive}",
+                              "selectAction": { "type": "Action.Execute", "title": "Descanso", "verb": "${coffeeVerb}" },
+                              "items": [
+                                { "type": "Image", "url": "{{CoffeeBlue}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showCoffeeEndBreak}",
+                              "selectAction": { "type": "Action.Execute", "title": "Fin descanso", "verb": "${coffeeVerb}" },
+                              "items": [
+                                { "type": "Image", "url": "{{CoffeeBreak}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showCoffeeDisabled}",
+                              "items": [
+                                { "type": "Image", "url": "{{CoffeeDisabled}}", "width": "44px" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Column",
+                          "width": "auto",
+                          "items": [
+                            {
+                              "type": "Container",
+                              "$when": "${showFoodActive}",
+                              "selectAction": { "type": "Action.Execute", "title": "Comida", "verb": "${foodVerb}" },
+                              "items": [
+                                { "type": "Image", "url": "{{FoodBlue}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showFoodEndBreak}",
+                              "selectAction": { "type": "Action.Execute", "title": "Fin comida", "verb": "${foodVerb}" },
+                              "items": [
+                                { "type": "Image", "url": "{{FoodBreak}}", "width": "44px" }
+                              ]
+                            },
+                            {
+                              "type": "Container",
+                              "$when": "${showFoodDisabled}",
+                              "items": [
+                                { "type": "Image", "url": "{{FoodDisabled}}", "width": "44px" }
+                              ]
+                            }
+                          ]
+                        }
                       ]
                     }
                   ]
