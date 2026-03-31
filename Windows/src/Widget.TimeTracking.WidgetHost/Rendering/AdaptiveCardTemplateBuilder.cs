@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Widget.TimeTracking.Core.Enums;
 
@@ -8,12 +9,6 @@ internal static class AdaptiveCardTemplateBuilder
     /// <summary>Fondo de la tarjeta del widget (color plano #F4F9FD, data URI SVG para el host de widgets).</summary>
     private static readonly string WidgetCardSurfaceBg = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800'><rect width='400' height='800' fill='#F4F9FD'/></svg>");
-
-    /// <summary>Fondo del cronómetro: cápsula SVG con el trazo más metido hacia dentro para que el host no aplaste/recorte el redondeo derecho al estirarla.</summary>
-    private static readonly string WhiteCardBg = SvgDataUri(
-        "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='48' viewBox='0 0 240 48'>"
-        + "<rect x='1.5' y='1.5' width='237' height='45' rx='12' ry='12' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
-        + "</svg>");
 
     #region Composite button SVGs (background rect + white icon baked into one SVG)
 
@@ -233,29 +228,12 @@ internal static class AdaptiveCardTemplateBuilder
                       "style": "default",
                       "items": [
                         {
-                          "type": "Container",
-                          "backgroundImage": { "url": "{{WhiteCardBg}}", "fillMode": "stretch" },
-                          "style": "default",
-                          "minHeight": "44px",
-                          "verticalContentAlignment": "center",
-                          "padding": {
-                            "top": "8px",
-                            "bottom": "8px",
-                            "left": "12px",
-                            "right": "12px"
-                          },
-                          "items": [
-                            {
-                              "type": "TextBlock",
-                              "text": "• ${sessionCounter}",
-                              "size": "large",
-                              "weight": "bolder",
-                              "fontType": "monospace",
-                              "wrap": false,
-                              "color": "dark",
-                              "horizontalAlignment": "center"
-                            }
-                          ]
+                          "type": "Image",
+                          "url": "${timerChipSvg}",
+                          "width": "110px",
+                          "height": "44px",
+                          "horizontalAlignment": "left",
+                          "spacing": "none"
                         }
                       ]
                     }
@@ -461,7 +439,6 @@ internal static class AdaptiveCardTemplateBuilder
     private static string CompileTemplate() =>
         RawTemplate
             .Replace("{{WidgetCardSurfaceBg}}", WidgetCardSurfaceBg)
-            .Replace("{{WhiteCardBg}}", WhiteCardBg)
             .Replace("{{EntryBlue}}", EntryBlue)
             .Replace("{{EntryDisabled}}", EntryDisabled)
             .Replace("{{StopBlue}}", StopBlue)
@@ -476,6 +453,141 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string SvgDataUri(string svg) =>
         "data:image/svg+xml," + Uri.EscapeDataString(svg);
+
+    private static string BuildTimerChipSvg(string sessionCounter)
+    {
+        var normalizedCounter = NormalizeTimerCounter(sessionCounter);
+        var glyphMarkup = BuildTimerGlyphMarkup(normalizedCounter);
+        return SvgDataUri(
+            "<svg xmlns='http://www.w3.org/2000/svg' width='110' height='44' viewBox='0 0 110 44'>"
+            + "<rect x='0.5' y='0.5' width='109' height='43' rx='12' ry='12' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
+            + glyphMarkup
+            + "</svg>");
+    }
+
+    private static string NormalizeTimerCounter(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "00:00:00";
+        }
+
+        var candidate = new StringBuilder(8);
+        foreach (var character in value)
+        {
+            if (char.IsDigit(character) || character == ':')
+            {
+                candidate.Append(character);
+            }
+        }
+
+        var normalized = candidate.ToString();
+        return normalized.Length == 8 && normalized[2] == ':' && normalized[5] == ':'
+            ? normalized
+            : "00:00:00";
+    }
+
+    private static string BuildTimerGlyphMarkup(string timerText)
+    {
+        var markup = new StringBuilder(512);
+        var timerWidth = MeasureTimerGlyphWidth(timerText);
+        const int bulletDiameter = 4;
+        const int bulletGap = 7;
+        const int chipWidth = 110;
+        var groupStartX = (chipWidth - (bulletDiameter + bulletGap + timerWidth)) / 2;
+        var cursor = groupStartX + bulletDiameter + bulletGap;
+
+        markup.Append($"<circle cx='{groupStartX + 2}' cy='22' r='2' fill='#111827'/>");
+        markup.Append("<g fill='none' stroke='#111827' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'>");
+
+        foreach (var character in timerText)
+        {
+            if (character == ':')
+            {
+                AppendColonMarkup(markup, cursor);
+                cursor += 3;
+                continue;
+            }
+
+            if (char.IsDigit(character))
+            {
+                AppendDigitMarkup(markup, character - '0', cursor);
+                cursor += 7;
+            }
+        }
+
+        markup.Append("</g>");
+        return markup.ToString();
+    }
+
+    private static int MeasureTimerGlyphWidth(string timerText)
+    {
+        var width = 0;
+        for (var index = 0; index < timerText.Length; index++)
+        {
+            width += timerText[index] == ':' ? 2 : 6;
+            if (index < timerText.Length - 1)
+            {
+                width += 1;
+            }
+        }
+
+        return width;
+    }
+
+    private static void AppendDigitMarkup(StringBuilder markup, int digit, int x)
+    {
+        var segments = GetDigitSegments(digit);
+        foreach (var segment in segments)
+        {
+            switch (segment)
+            {
+                case 'a':
+                    AppendLineMarkup(markup, x + 1, 16, x + 5, 16);
+                    break;
+                case 'b':
+                    AppendLineMarkup(markup, x + 5, 16, x + 5, 21);
+                    break;
+                case 'c':
+                    AppendLineMarkup(markup, x + 5, 21, x + 5, 26);
+                    break;
+                case 'd':
+                    AppendLineMarkup(markup, x + 1, 26, x + 5, 26);
+                    break;
+                case 'e':
+                    AppendLineMarkup(markup, x + 1, 21, x + 1, 26);
+                    break;
+                case 'f':
+                    AppendLineMarkup(markup, x + 1, 16, x + 1, 21);
+                    break;
+                case 'g':
+                    AppendLineMarkup(markup, x + 1, 21, x + 5, 21);
+                    break;
+            }
+        }
+    }
+
+    private static string GetDigitSegments(int digit) =>
+        digit switch
+        {
+            0 => "abcdef",
+            1 => "bc",
+            2 => "abdeg",
+            3 => "abcdg",
+            4 => "bcfg",
+            5 => "acdfg",
+            6 => "acdefg",
+            7 => "abc",
+            8 => "abcdefg",
+            9 => "abcdfg",
+            _ => string.Empty
+        };
+
+    private static void AppendColonMarkup(StringBuilder markup, int x) =>
+        markup.Append($"<circle cx='{x + 1}' cy='18' r='1.1' fill='#111827' stroke='none'/><circle cx='{x + 1}' cy='24' r='1.1' fill='#111827' stroke='none'/>");
+
+    private static void AppendLineMarkup(StringBuilder markup, int x1, int y1, int x2, int y2) =>
+        markup.Append($"<path d='M{x1} {y1}L{x2} {y2}'/>");
 
     public static string BuildData(TimeTrackingWidgetViewModel viewModel) =>
         viewModel switch
@@ -502,6 +614,7 @@ internal static class AdaptiveCardTemplateBuilder
                     CoffeeTodayDuration = string.Empty,
                     FoodTodayDuration = string.Empty,
                     TimelineText = string.Empty,
+                    TimerChipSvg = BuildTimerChipSvg("00:00:00"),
                     CoffeeVerb = "start-coffee-break",
                     FoodVerb = "start-food-break",
                     ShowEntryButton = false,
@@ -541,6 +654,7 @@ internal static class AdaptiveCardTemplateBuilder
                     signedIn.CoffeeTodayDuration,
                     signedIn.FoodTodayDuration,
                     signedIn.TimelineText,
+                    TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter),
                     CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
                         ? "end-coffee-break" : "start-coffee-break",
                     FoodVerb = signedIn.ActiveBreakType == BreakType.Food
