@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Widget.TimeTracking.Core.Enums;
@@ -121,7 +122,6 @@ internal static class AdaptiveCardTemplateBuilder
         + "<path d='M5.023 4.098L5.06 1.025'/>"
         + "<path d='M4.965 8.877L4.998 6.146'/>"
         + "</g></svg>");
-
     /// <summary>CTA sesión cerrada: mismo tamaño que el resto de botones (44×44, #5F96F9 + icono logout).</summary>
     private static readonly string OpenAppBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
@@ -489,30 +489,33 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static string BuildTimerGlyphMarkup(string timerText)
     {
+        const double bulletDiameter = 4;
+        const double bulletGap = 9.1;
+        const double chipWidth = 110;
+        const double digitAdvance = 8.7;
+        const double colonAdvance = 4.8;
+
         var markup = new StringBuilder(512);
-        var timerWidth = MeasureTimerGlyphWidth(timerText);
-        const int bulletDiameter = 4;
-        const int bulletGap = 7;
-        const int chipWidth = 110;
+        var timerWidth = MeasureTimerGlyphWidth(timerText, digitAdvance, colonAdvance);
         var groupStartX = (chipWidth - (bulletDiameter + bulletGap + timerWidth)) / 2;
         var cursor = groupStartX + bulletDiameter + bulletGap;
 
-        markup.Append($"<circle cx='{groupStartX + 2}' cy='22' r='2' fill='#111827'/>");
-        markup.Append("<g fill='none' stroke='#111827' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'>");
+        markup.Append($"<circle cx='{SvgValue(groupStartX + (bulletDiameter / 2))}' cy='22' r='1.9' fill='#111827' opacity='1'/>");
+        markup.Append("<g fill='none' stroke='#111827' stroke-width='1.62' stroke-linecap='round' stroke-linejoin='round'>");
 
         foreach (var character in timerText)
         {
             if (character == ':')
             {
                 AppendColonMarkup(markup, cursor);
-                cursor += 3;
+                cursor += colonAdvance;
                 continue;
             }
 
             if (char.IsDigit(character))
             {
                 AppendDigitMarkup(markup, character - '0', cursor);
-                cursor += 7;
+                cursor += digitAdvance;
             }
         }
 
@@ -520,74 +523,50 @@ internal static class AdaptiveCardTemplateBuilder
         return markup.ToString();
     }
 
-    private static int MeasureTimerGlyphWidth(string timerText)
+    private static double MeasureTimerGlyphWidth(string timerText, double digitAdvance, double colonAdvance)
     {
-        var width = 0;
+        var width = 0d;
         for (var index = 0; index < timerText.Length; index++)
         {
-            width += timerText[index] == ':' ? 2 : 6;
-            if (index < timerText.Length - 1)
-            {
-                width += 1;
-            }
+            width += timerText[index] == ':' ? colonAdvance : digitAdvance;
         }
 
         return width;
     }
 
-    private static void AppendDigitMarkup(StringBuilder markup, int digit, int x)
+    private static void AppendDigitMarkup(StringBuilder markup, int digit, double x)
     {
-        var segments = GetDigitSegments(digit);
-        foreach (var segment in segments)
+        var digitPath = GetMonospaceDigitPath(digit);
+        if (!string.IsNullOrEmpty(digitPath))
         {
-            switch (segment)
-            {
-                case 'a':
-                    AppendLineMarkup(markup, x + 1, 16, x + 5, 16);
-                    break;
-                case 'b':
-                    AppendLineMarkup(markup, x + 5, 16, x + 5, 21);
-                    break;
-                case 'c':
-                    AppendLineMarkup(markup, x + 5, 21, x + 5, 26);
-                    break;
-                case 'd':
-                    AppendLineMarkup(markup, x + 1, 26, x + 5, 26);
-                    break;
-                case 'e':
-                    AppendLineMarkup(markup, x + 1, 21, x + 1, 26);
-                    break;
-                case 'f':
-                    AppendLineMarkup(markup, x + 1, 16, x + 1, 21);
-                    break;
-                case 'g':
-                    AppendLineMarkup(markup, x + 1, 21, x + 5, 21);
-                    break;
-            }
+            markup.Append($"<path d='{digitPath}' transform='translate({SvgValue(x)},16.85) scale(1.03)'/>");
         }
     }
 
-    private static string GetDigitSegments(int digit) =>
+    private static string GetMonospaceDigitPath(int digit) =>
         digit switch
         {
-            0 => "abcdef",
-            1 => "bc",
-            2 => "abdeg",
-            3 => "abcdg",
-            4 => "bcfg",
-            5 => "acdfg",
-            6 => "acdefg",
-            7 => "abc",
-            8 => "abcdefg",
-            9 => "abcdfg",
+            0 => "M1.4 0.8H4.6L5.8 2V8L4.6 9.2H1.4L0.2 8V2L1.4 0.8Z",
+            1 => "M1.7 2.3L3.2 0.8V9.2M1.6 9.2H4.8M1.7 2.3H3.1",
+            2 => "M0.7 2.1L2 0.8H4.8L5.9 1.9V3.3L0.8 9.2H5.9",
+            3 => "M0.8 1.2H4.7L5.9 2.3V4L4.8 5H2.2M4.8 5L5.9 6V7.7L4.7 8.8H0.8",
+            4 => "M4.9 0.8V9.2M0.8 5H5.8M0.8 5L3.7 0.8",
+            5 => "M5.8 0.8H1.3V4.8H4.7L5.9 6V7.9L4.8 9.2H0.9",
+            6 => "M5.1 0.8H1.9L0.8 1.9V8.1L1.9 9.2H4.8L5.9 8.1V6L4.8 4.8H0.9",
+            7 => "M0.8 0.8H5.9L2.8 9.2",
+            8 => "M1.8 0.8H4.7L5.8 1.9V3.8L4.7 5H1.8L0.8 3.8V1.9L1.8 0.8ZM1.8 5H4.7L5.8 6.1V8L4.7 9.2H1.8L0.8 8V6.1L1.8 5Z",
+            9 => "M5.8 5H1.8L0.8 3.9V1.9L1.8 0.8H4.8L5.8 1.9V8.1L4.8 9.2H1.1",
             _ => string.Empty
         };
 
-    private static void AppendColonMarkup(StringBuilder markup, int x) =>
-        markup.Append($"<circle cx='{x + 1}' cy='18' r='1.1' fill='#111827' stroke='none'/><circle cx='{x + 1}' cy='24' r='1.1' fill='#111827' stroke='none'/>");
+    private static void AppendColonMarkup(StringBuilder markup, double x)
+    {
+        var centerX = SvgValue(x + 1.1);
+        markup.Append($"<circle cx='{centerX}' cy='19.35' r='1.05' fill='#111827' stroke='none' opacity='1'/><circle cx='{centerX}' cy='24.65' r='1.05' fill='#111827' stroke='none' opacity='1'/>");
+    }
 
-    private static void AppendLineMarkup(StringBuilder markup, int x1, int y1, int x2, int y2) =>
-        markup.Append($"<path d='M{x1} {y1}L{x2} {y2}'/>");
+    private static string SvgValue(double value) =>
+        value.ToString("0.###", CultureInfo.InvariantCulture);
 
     public static string BuildData(TimeTrackingWidgetViewModel viewModel) =>
         viewModel switch
@@ -678,3 +657,4 @@ internal static class AdaptiveCardTemplateBuilder
                 $"Unsupported widget view model type: {viewModel.GetType().Name}")
         };
 }
+
