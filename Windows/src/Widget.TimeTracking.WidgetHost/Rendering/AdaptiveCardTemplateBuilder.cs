@@ -121,6 +121,7 @@ internal static class AdaptiveCardTemplateBuilder
         + "<path d='M5.023 4.098L5.06 1.025'/>"
         + "<path d='M4.965 8.877L4.998 6.146'/>"
         + "</g></svg>");
+
     /// <summary>CTA sesión cerrada: mismo tamaño que el resto de botones (44×44, #5F96F9 + icono logout).</summary>
     private static readonly string OpenAppBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
@@ -282,23 +283,15 @@ internal static class AdaptiveCardTemplateBuilder
                           "items": [
                             {
                               "type": "Container",
-                              "$when": "${showEntryButton}",
-                              "selectAction": { "type": "Action.Execute", "title": "Empezar jornada", "verb": "clock-in" },
+                              "$when": "${showPrimaryActionInteractive}",
+                              "selectAction": { "type": "Action.Execute", "title": "${primaryActionTitle}", "verb": "${primaryActionVerb}" },
                               "items": [
-                                { "type": "Image", "url": "{{EntryBlue}}", "width": "44px" }
+                                { "type": "Image", "url": "${primaryActionButton}", "width": "44px" }
                               ]
                             },
                             {
                               "type": "Container",
-                              "$when": "${showClockOutButton}",
-                              "selectAction": { "type": "Action.Execute", "title": "Finalizar jornada", "verb": "clock-out" },
-                              "items": [
-                                { "type": "Image", "url": "{{StopBlue}}", "width": "44px" }
-                              ]
-                            },
-                            {
-                              "type": "Container",
-                              "$when": "${showClockOutDisabled}",
+                              "$when": "${showPrimaryActionDisabled}",
                               "items": [
                                 { "type": "Image", "url": "{{StopDisabled}}", "width": "44px" }
                               ]
@@ -653,9 +646,11 @@ internal static class AdaptiveCardTemplateBuilder
                     TimerChipSvg = BuildTimerChipSvg("00:00:00"),
                     CoffeeVerb = "start-coffee-break",
                     FoodVerb = "start-food-break",
-                    ShowEntryButton = false,
-                    ShowClockOutButton = false,
-                    ShowClockOutDisabled = false,
+                    ShowPrimaryActionInteractive = false,
+                    ShowPrimaryActionDisabled = false,
+                    PrimaryActionButton = string.Empty,
+                    PrimaryActionTitle = string.Empty,
+                    PrimaryActionVerb = string.Empty,
                     ShowCoffeeActive = false,
                     ShowCoffeeEndBreak = false,
                     ShowCoffeeDisabled = false,
@@ -705,9 +700,12 @@ internal static class AdaptiveCardTemplateBuilder
                     ? "end-coffee-break" : "start-coffee-break",
                 FoodVerb = signedIn.ActiveBreakType == BreakType.Food
                     ? "end-food-break" : "start-food-break",
-                ShowEntryButton = signedIn.CanClockIn,
-                ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
-                ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
+                ShowPrimaryActionInteractive = signedIn.CanClockIn
+                    || (signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut),
+                ShowPrimaryActionDisabled = signedIn.ActiveBreakType != BreakType.None,
+                PrimaryActionButton = signedIn.CanClockIn ? EntryBlue : StopBlue,
+                PrimaryActionTitle = signedIn.CanClockIn ? "Empezar jornada" : "Finalizar jornada",
+                PrimaryActionVerb = signedIn.CanClockIn ? "clock-in" : "clock-out",
                 ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
                 ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
                 ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food
