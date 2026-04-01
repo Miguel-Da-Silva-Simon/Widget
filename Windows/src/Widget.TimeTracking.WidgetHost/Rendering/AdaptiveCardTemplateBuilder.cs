@@ -466,6 +466,11 @@ internal static class AdaptiveCardTemplateBuilder
                     },
                     {
                       "type": "Column",
+                      "width": "20px",
+                      "items": []
+                    },
+                    {
+                      "type": "Column",
                       "width": "auto",
                       "horizontalAlignment": "center",
                       "items": [
@@ -497,6 +502,11 @@ internal static class AdaptiveCardTemplateBuilder
                           "wrap": true
                         }
                       ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "20px",
+                      "items": []
                     },
                     {
                       "type": "Column",
