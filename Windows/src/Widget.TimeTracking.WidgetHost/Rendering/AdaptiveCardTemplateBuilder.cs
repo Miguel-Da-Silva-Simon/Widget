@@ -433,40 +433,24 @@ internal static class AdaptiveCardTemplateBuilder
                     {
                       "type": "Column",
                       "width": "auto",
+                      "horizontalAlignment": "center",
                       "items": [
                         {
-                          "type": "ColumnSet",
+                          "type": "Image",
+                          "url": "{{LastShiftIcon}}",
+                          "width": "16px",
+                          "height": "16px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Jornada",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
                           "spacing": "none",
-                          "columns": [
-                            {
-                              "type": "Column",
-                              "width": "auto",
-                              "items": [
-                                {
-                                  "type": "Image",
-                                  "url": "{{LastShiftIcon}}",
-                                  "width": "16px",
-                                  "height": "16px"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "Column",
-                              "width": "stretch",
-                              "verticalContentAlignment": "center",
-                              "items": [
-                                {
-                                  "type": "TextBlock",
-                                  "text": "Jornada",
-                                  "size": "small",
-                                  "color": "dark",
-                                  "weight": "lighter",
-                                  "spacing": "none",
-                                  "wrap": true
-                                }
-                              ]
-                            }
-                          ]
+                          "horizontalAlignment": "center",
+                          "wrap": true
                         },
                         {
                           "type": "TextBlock",
@@ -475,6 +459,7 @@ internal static class AdaptiveCardTemplateBuilder
                           "color": "dark",
                           "weight": "bolder",
                           "spacing": "small",
+                          "horizontalAlignment": "center",
                           "wrap": true
                         }
                       ]
@@ -482,40 +467,24 @@ internal static class AdaptiveCardTemplateBuilder
                     {
                       "type": "Column",
                       "width": "auto",
+                      "horizontalAlignment": "center",
                       "items": [
                         {
-                          "type": "ColumnSet",
+                          "type": "Image",
+                          "url": "{{CoffeeSummaryIcon}}",
+                          "width": "16px",
+                          "height": "16px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Descanso",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
                           "spacing": "none",
-                          "columns": [
-                            {
-                              "type": "Column",
-                              "width": "auto",
-                              "items": [
-                                {
-                                  "type": "Image",
-                                  "url": "{{CoffeeSummaryIcon}}",
-                                  "width": "16px",
-                                  "height": "16px"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "Column",
-                              "width": "stretch",
-                              "verticalContentAlignment": "center",
-                              "items": [
-                                {
-                                  "type": "TextBlock",
-                                  "text": "Descanso",
-                                  "size": "small",
-                                  "color": "dark",
-                                  "weight": "lighter",
-                                  "spacing": "none",
-                                  "wrap": true
-                                }
-                              ]
-                            }
-                          ]
+                          "horizontalAlignment": "center",
+                          "wrap": true
                         },
                         {
                           "type": "TextBlock",
@@ -524,6 +493,7 @@ internal static class AdaptiveCardTemplateBuilder
                           "color": "dark",
                           "weight": "bolder",
                           "spacing": "small",
+                          "horizontalAlignment": "center",
                           "wrap": true
                         }
                       ]
@@ -531,40 +501,24 @@ internal static class AdaptiveCardTemplateBuilder
                     {
                       "type": "Column",
                       "width": "auto",
+                      "horizontalAlignment": "center",
                       "items": [
                         {
-                          "type": "ColumnSet",
+                          "type": "Image",
+                          "url": "{{FoodSummaryIcon}}",
+                          "width": "16px",
+                          "height": "16px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Comida",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
                           "spacing": "none",
-                          "columns": [
-                            {
-                              "type": "Column",
-                              "width": "auto",
-                              "items": [
-                                {
-                                  "type": "Image",
-                                  "url": "{{FoodSummaryIcon}}",
-                                  "width": "16px",
-                                  "height": "16px"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "Column",
-                              "width": "stretch",
-                              "verticalContentAlignment": "center",
-                              "items": [
-                                {
-                                  "type": "TextBlock",
-                                  "text": "Comida",
-                                  "size": "small",
-                                  "color": "dark",
-                                  "weight": "lighter",
-                                  "spacing": "none",
-                                  "wrap": true
-                                }
-                              ]
-                            }
-                          ]
+                          "horizontalAlignment": "center",
+                          "wrap": true
                         },
                         {
                           "type": "TextBlock",
@@ -573,6 +527,7 @@ internal static class AdaptiveCardTemplateBuilder
                           "color": "dark",
                           "weight": "bolder",
                           "spacing": "small",
+                          "horizontalAlignment": "center",
                           "wrap": true
                         }
                       ]
