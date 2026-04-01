@@ -246,7 +246,7 @@ internal sealed class WidgetRefreshService
         snapshot.Status switch
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
-            TimeTrackingStatus.Working => "Estas trabajando",
+            TimeTrackingStatus.Working => "Estás trabajando",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de cafe",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",

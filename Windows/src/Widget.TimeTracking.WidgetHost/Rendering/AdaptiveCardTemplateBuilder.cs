@@ -408,7 +408,8 @@ internal static class AdaptiveCardTemplateBuilder
                   "weight": "bolder",
                   "color": "dark",
                   "wrap": true,
-                  "spacing": "small"
+                  "spacing": "small",
+                  "horizontalAlignment": "center"
                 },
                 {
                   "type": "TextBlock",
@@ -420,8 +421,13 @@ internal static class AdaptiveCardTemplateBuilder
                   "spacing": "small"
                 },
                 {
+                  "type": "Container",
+                  "spacing": "none",
+                  "minHeight": "8px"
+                },
+                {
                   "type": "ColumnSet",
-                  "spacing": "medium",
+                  "spacing": "large",
                   "horizontalAlignment": "center",
                   "columns": [
                     {
