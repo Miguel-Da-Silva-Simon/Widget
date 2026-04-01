@@ -412,15 +412,6 @@ internal static class AdaptiveCardTemplateBuilder
                   "horizontalAlignment": "center"
                 },
                 {
-                  "type": "TextBlock",
-                  "text": "${statusDetail}",
-                  "size": "small",
-                  "color": "dark",
-                  "weight": "lighter",
-                  "wrap": true,
-                  "spacing": "small"
-                },
-                {
                   "type": "Container",
                   "spacing": "none",
                   "minHeight": "8px"
