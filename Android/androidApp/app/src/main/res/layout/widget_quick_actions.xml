@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/bg_widget_quick_actions"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:paddingStart="14dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:orientation="horizontal">
 
         <FrameLayout
             android:id="@+id/quick_action_tile_invoice"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="58dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -31,12 +33,12 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="8dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_invoice"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_invoice" />
 
@@ -44,13 +46,13 @@
                     android:id="@+id/quick_action_label_invoice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/quick_action_label_invoice"
                     android:textColor="@color/text_primary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </FrameLayout>
@@ -58,7 +60,7 @@
         <FrameLayout
             android:id="@+id/quick_action_tile_expense"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="58dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -72,12 +74,12 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="8dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_expense"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_expense" />
 
@@ -85,13 +87,13 @@
                     android:id="@+id/quick_action_label_expense"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/quick_action_label_expense"
                     android:textColor="@color/text_primary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </FrameLayout>
@@ -99,16 +101,15 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:baselineAligned="false"
         android:orientation="horizontal">
 
         <FrameLayout
             android:id="@+id/quick_action_tile_product"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="58dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -122,12 +123,12 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="8dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_product"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_product" />
 
@@ -135,13 +136,13 @@
                     android:id="@+id/quick_action_label_product"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/quick_action_label_product"
                     android:textColor="@color/text_primary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </FrameLayout>
@@ -149,7 +150,7 @@
         <FrameLayout
             android:id="@+id/quick_action_tile_customer"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="58dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -163,12 +164,12 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="8dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_customer"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_customer" />
 
@@ -176,13 +177,13 @@
                     android:id="@+id/quick_action_label_customer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/quick_action_label_customer"
                     android:textColor="@color/text_primary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </FrameLayout>

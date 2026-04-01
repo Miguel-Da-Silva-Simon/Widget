@@ -19,7 +19,7 @@ internal object QuickActionsWidgetBinder {
     private const val PI_ADD_PRODUCT = 403
     private const val PI_NEW_CUSTOMER = 404
     private const val MIN_LABEL_WIDTH_DP = 150
-    private const val MIN_LABEL_HEIGHT_DP = 150
+    private const val MIN_LABEL_HEIGHT_DP = 112
 
     fun build(context: Context, appWidgetOptions: Bundle? = null): RemoteViews {
         val app = context.applicationContext

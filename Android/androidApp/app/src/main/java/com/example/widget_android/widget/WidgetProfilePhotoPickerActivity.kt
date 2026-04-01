@@ -1,26 +1,23 @@
 package com.example.widget_android.widget
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import com.example.widget_android.data.ProfilePhotoStorage
 import com.example.widget_android.data.SessionRepository
 import kotlinx.coroutines.launch
 
 class WidgetProfilePhotoPickerActivity : ComponentActivity() {
 
     private val picker =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             lifecycleScope.launch {
                 if (uri != null) {
-                    runCatching {
-                        contentResolver.takePersistableUriPermission(
-                            uri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        )
+                    ProfilePhotoStorage.importToAppStorage(applicationContext, uri)?.let { storedPhoto ->
+                        SessionRepository(applicationContext).saveProfilePhotoUri(storedPhoto)
                     }
-                    SessionRepository(applicationContext).saveProfilePhotoUri(uri.toString())
                 }
                 FichajeWidgetUpdater.updateAll(applicationContext)
                 finish()
@@ -30,7 +27,9 @@ class WidgetProfilePhotoPickerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
-            picker.launch(arrayOf("image/*"))
+            picker.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
         }
     }
 }

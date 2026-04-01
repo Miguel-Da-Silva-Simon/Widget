@@ -1,9 +1,8 @@
 package com.example.widget_android.ui
 
-import android.content.Intent
-import android.net.Uri
-import android.widget.ImageView
+import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -48,6 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -55,7 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.widget_android.R
 import com.example.widget_android.data.AttendanceAction
 import com.example.widget_android.data.AttendanceDurations
@@ -65,6 +65,8 @@ import com.example.widget_android.data.canChangeMode
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
+import com.example.widget_android.data.ProfilePhotoStorage
+import com.example.widget_android.data.TokenHolder
 import com.example.widget_android.data.resolveActionBindings
 import com.example.widget_android.network.toUserMessage
 import com.example.widget_android.theme.Gray100
@@ -75,11 +77,12 @@ import com.example.widget_android.theme.SygnaBlueLight
 import com.example.widget_android.theme.White
 import com.example.widget_android.theme.WorkGreen
 import com.example.widget_android.widget.FichajeWidgetUpdater
-import java.net.ConnectException
-import java.net.SocketTimeoutException
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 @Composable
 fun DashboardScreen(
@@ -94,20 +97,26 @@ fun DashboardScreen(
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var tick by remember { mutableIntStateOf(0) }
+    var actionInProgress by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
+    var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(profilePhotoUri) {
+        photoBitmap = ProfilePhotoStorage.decodeBitmap(profilePhotoUri)
+    }
     val photoPicker =
-        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri == null) return@rememberLauncherForActivityResult
             scope.launch {
-                runCatching {
-                    context.contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
+                val storedPhoto = ProfilePhotoStorage.importToAppStorage(context, uri)
+                if (storedPhoto == null) {
+                    error = "No se pudo cargar la foto seleccionada"
+                    return@launch
                 }
-                repository.saveProfilePhotoUri(uri.toString())
-                profilePhotoUri = uri.toString()
+                repository.saveProfilePhotoUri(storedPhoto)
+                profilePhotoUri = storedPhoto
+                photoBitmap = ProfilePhotoStorage.decodeBitmap(storedPhoto)
+                FichajeWidgetUpdater.updateAll(context.applicationContext)
             }
         }
 
@@ -115,56 +124,84 @@ fun DashboardScreen(
         FichajeWidgetUpdater.updateAll(context.applicationContext)
     }
 
+    fun Throwable?.isUnauthorized(): Boolean =
+        this is HttpException && code() == 401
+
+    suspend fun <T> executeWithSessionRecovery(
+        operation: suspend () -> Result<T>
+    ): Result<T> {
+        val initial = operation()
+        if (!initial.exceptionOrNull().isUnauthorized()) {
+            return initial
+        }
+        val freshToken = withContext(Dispatchers.IO) { repository.readToken() }
+        if (!freshToken.isNullOrBlank()) {
+            TokenHolder.token = freshToken
+        }
+        return operation()
+    }
+
     suspend fun runAttendanceAction(action: AttendanceAction?) {
         if (action == null) return
-        repository.doAction(action).fold(
-            onSuccess = {
+        if (actionInProgress) return
+        actionInProgress = true
+        try {
+            val result = executeWithSessionRecovery { repository.doAction(action) }
+            result.getOrNull()?.let {
                 state = it
                 refreshWidget()
-            },
-            onFailure = { error = it.toUserMessage() }
-        )
+            }
+            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+        } finally {
+            actionInProgress = false
+        }
     }
 
     suspend fun startNewWorkday() {
-        repository.reset().fold(
-            onSuccess = {
+        if (actionInProgress) return
+        actionInProgress = true
+        try {
+            val resetResult = executeWithSessionRecovery { repository.reset() }
+            if (resetResult.isFailure) {
+                resetResult.exceptionOrNull()?.let { error = it.toUserMessage() }
+                return
+            }
+            state = resetResult.getOrNull()
+            val clockInResult = executeWithSessionRecovery { repository.doAction(AttendanceAction.CLOCK_IN) }
+            clockInResult.getOrNull()?.let {
                 state = it
                 refreshWidget()
-                runAttendanceAction(AttendanceAction.CLOCK_IN)
-            },
-            onFailure = { error = it.toUserMessage() }
-        )
+            }
+            clockInResult.exceptionOrNull()?.let { error = it.toUserMessage() }
+        } finally {
+            actionInProgress = false
+        }
     }
 
     suspend fun reload() {
         loading = true
         error = null
-        var today = repository.today()
-        if (today.isFailure) {
-            val e = today.exceptionOrNull()
-            if (e is SocketTimeoutException || e is ConnectException) {
-                delay(500)
-                today = repository.today()
-            }
+        val today = executeWithSessionRecovery { repository.today() }
+        today.onSuccess {
+            state = it
+            loading = false
+            refreshWidget()
         }
-        today.fold(
-            onSuccess = {
-                state = it
-                loading = false
-            },
-            onFailure = { e ->
-                loading = false
-                error = e.toUserMessage()
-            }
-        )
+        today.exceptionOrNull()?.let { e ->
+            loading = false
+            error = e.toUserMessage()
+        }
         if (today.isFailure) {
             if (userName.isBlank()) {
                 repository.readUserName()?.let { userName = it }
             }
             return
         }
-        repository.refreshMe().onSuccess { userName = it }
+        val me = executeWithSessionRecovery { repository.refreshMe() }
+        me.getOrNull()?.let { userName = it }
+        me.exceptionOrNull()?.let { e ->
+            if (!e.isUnauthorized()) error = e.toUserMessage()
+        }
         if (userName.isBlank()) {
             repository.readUserName()?.let { userName = it }
         }
@@ -290,24 +327,59 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 ProfilePhotoAvatar(
-                    photoUri = profilePhotoUri,
+                    bitmap = photoBitmap,
                     userName = userName,
                     modifier = Modifier.size(72.dp)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedButton(
-                    onClick = { photoPicker.launch(arrayOf("image/*")) },
-                    modifier = Modifier.height(34.dp),
-                    shape = RoundedCornerShape(999.dp),
-                    border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = White,
-                        contentColor = SygnaBlue
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Actualizar foto", fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                    OutlinedButton(
+                        onClick = {
+                            photoPicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.height(34.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = White,
+                            contentColor = SygnaBlue
+                        )
+                    ) {
+                        Text(
+                            if (profilePhotoUri.isNullOrBlank()) "Añadir foto" else "Cambiar foto",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    }
+                    if (!profilePhotoUri.isNullOrBlank()) {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    ProfilePhotoStorage.deletePhoto(context)
+                                    repository.clearProfilePhotoUri()
+                                    profilePhotoUri = null
+                                    photoBitmap = null
+                                    FichajeWidgetUpdater.updateAll(context.applicationContext)
+                                }
+                            },
+                            modifier = Modifier.height(34.dp),
+                            shape = RoundedCornerShape(999.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE57373)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = White,
+                                contentColor = Color(0xFFE57373)
+                            )
+                        ) {
+                            Text("Quitar foto", fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -479,7 +551,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = "Entrada",
                         caption = "Entrada",
-                        enabled = entradaHit && !s.isFinished,
+                        enabled = entradaHit && !s.isFinished && !actionInProgress,
                         highlighted = hiEntrada,
                         iconOn = R.drawable.ic_widget_entrada,
                         iconOff = R.drawable.ic_widget_entrada_dim,
@@ -491,7 +563,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = if (actions.breakAction == AttendanceAction.BREAK_END) "Fin desc." else "Descanso",
                         caption = "Desc.",
-                        enabled = coffeeHit && !s.isFinished,
+                        enabled = coffeeHit && !s.isFinished && !actionInProgress,
                         highlighted = hiBreak,
                         iconOn = R.drawable.ic_widget_descanso,
                         iconOff = R.drawable.ic_widget_descanso_dim,
@@ -503,7 +575,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = if (actions.mealAction == AttendanceAction.MEAL_END) "Fin comida" else "Comida",
                         caption = "Comida",
-                        enabled = mealHit && !s.isFinished,
+                        enabled = mealHit && !s.isFinished && !actionInProgress,
                         highlighted = hiMeal,
                         iconOn = R.drawable.ic_widget_comida,
                         iconOff = R.drawable.ic_widget_comida_dim,
@@ -515,7 +587,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = "Salida",
                         caption = "Salida",
-                        enabled = salidaHit && !s.isFinished,
+                        enabled = salidaHit && !s.isFinished && !actionInProgress,
                         highlighted = hiSalida,
                         iconOn = R.drawable.ic_widget_salida,
                         iconOff = R.drawable.ic_widget_salida_dim,
@@ -569,16 +641,24 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "Con comida",
                 selected = s.mode == ClockingMode.WITH_MEAL,
-                enabled = canChangeMode,
+                enabled = canChangeMode && !actionInProgress,
                 onClick = {
+                    if (actionInProgress) return@ModeOutlineChip
                     scope.launch {
-                        repository.setMode(ClockingMode.WITH_MEAL).fold(
-                            onSuccess = {
+                        actionInProgress = true
+                        try {
+                            val result =
+                                executeWithSessionRecovery {
+                                    repository.setMode(ClockingMode.WITH_MEAL)
+                                }
+                            result.getOrNull()?.let {
                                 state = it
                                 refreshWidget()
-                            },
-                            onFailure = { error = it.toUserMessage() }
-                        )
+                            }
+                            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+                        } finally {
+                            actionInProgress = false
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -586,16 +666,24 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "2 descansos",
                 selected = s.mode == ClockingMode.TWO_BREAKS,
-                enabled = canChangeMode,
+                enabled = canChangeMode && !actionInProgress,
                 onClick = {
+                    if (actionInProgress) return@ModeOutlineChip
                     scope.launch {
-                        repository.setMode(ClockingMode.TWO_BREAKS).fold(
-                            onSuccess = {
+                        actionInProgress = true
+                        try {
+                            val result =
+                                executeWithSessionRecovery {
+                                    repository.setMode(ClockingMode.TWO_BREAKS)
+                                }
+                            result.getOrNull()?.let {
                                 state = it
                                 refreshWidget()
-                            },
-                            onFailure = { error = it.toUserMessage() }
-                        )
+                            }
+                            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+                        } finally {
+                            actionInProgress = false
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -606,23 +694,17 @@ fun DashboardScreen(
 
         OutlinedButton(
             onClick = {
+                if (actionInProgress) return@OutlinedButton
                 scope.launch {
                     if (s.isFinished) {
                         startNewWorkday()
                     } else {
-                        val action = nextAction ?: AttendanceAction.CLOCK_IN
-                        repository.doAction(action).fold(
-                            onSuccess = {
-                                state = it
-                                refreshWidget()
-                            },
-                            onFailure = { error = it.toUserMessage() }
-                        )
+                        runAttendanceAction(nextAction ?: AttendanceAction.CLOCK_IN)
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = s.isFinished || nextAction != null,
+            enabled = !actionInProgress && (s.isFinished || nextAction != null),
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, SygnaBlue),
             colors = ButtonDefaults.outlinedButtonColors(
@@ -758,7 +840,7 @@ private fun formatElapsed(totalSeconds: Long): String {
 
 @Composable
 private fun ProfilePhotoAvatar(
-    photoUri: String?,
+    bitmap: Bitmap?,
     userName: String,
     modifier: Modifier = Modifier
 ) {
@@ -770,7 +852,14 @@ private fun ProfilePhotoAvatar(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
-        if (photoUri.isNullOrBlank()) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Foto de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -782,19 +871,6 @@ private fun ProfilePhotoAvatar(
                     fontSize = 24.sp
                 )
             }
-        } else {
-            AndroidView(
-                factory = { viewContext ->
-                    ImageView(viewContext).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                    }
-                },
-                update = { imageView ->
-                    imageView.setImageURI(null)
-                    imageView.setImageURI(Uri.parse(photoUri))
-                },
-                modifier = Modifier.fillMaxSize()
-            )
         }
     }
 }
