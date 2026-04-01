@@ -175,12 +175,12 @@ internal static class AdaptiveCardTemplateBuilder
                     {
                       "type": "Container",
                       "spacing": "none",
-                      "minHeight": "15px"
+                      "minHeight": "17px"
                     },
                     {
                       "type": "TextBlock",
                       "text": "${displayName}",
-                      "spacing": "none",
+                      "spacing": "small",
                       "weight": "bolder",
                       "color": "dark",
                       "wrap": true
