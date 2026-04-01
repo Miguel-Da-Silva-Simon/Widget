@@ -402,6 +402,11 @@ internal static class AdaptiveCardTemplateBuilder
               "separator": true,
               "items": [
                 {
+                  "type": "Container",
+                  "spacing": "none",
+                  "minHeight": "6px"
+                },
+                {
                   "type": "TextBlock",
                   "text": "${statusHeadline}",
                   "size": "large",
