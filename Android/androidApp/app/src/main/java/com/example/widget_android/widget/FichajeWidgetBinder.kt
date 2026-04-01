@@ -157,12 +157,12 @@ internal object FichajeWidgetBinder {
     private fun applyStateChrome(views: RemoteViews, state: ClockingState) {
         when (state.currentState) {
             AttendanceState.BREAK_ACTIVE -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_amber)
                 views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster_break)
             }
             AttendanceState.MEAL_ACTIVE -> {
-                views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
+                views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_orange)
                 views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
             }
