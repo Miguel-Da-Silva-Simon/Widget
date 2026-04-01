@@ -422,10 +422,11 @@ internal static class AdaptiveCardTemplateBuilder
                 {
                   "type": "ColumnSet",
                   "spacing": "medium",
+                  "horizontalAlignment": "center",
                   "columns": [
                     {
                       "type": "Column",
-                      "width": "stretch",
+                      "width": "auto",
                       "items": [
                         {
                           "type": "ColumnSet",
@@ -474,7 +475,7 @@ internal static class AdaptiveCardTemplateBuilder
                     },
                     {
                       "type": "Column",
-                      "width": "stretch",
+                      "width": "auto",
                       "items": [
                         {
                           "type": "ColumnSet",
@@ -523,7 +524,7 @@ internal static class AdaptiveCardTemplateBuilder
                     },
                     {
                       "type": "Column",
-                      "width": "stretch",
+                      "width": "auto",
                       "items": [
                         {
                           "type": "ColumnSet",

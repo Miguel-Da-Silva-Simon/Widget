@@ -83,7 +83,7 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
             TimeTrackingStatus.Working => "Estás trabajando",
-            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de café",
+            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",
             TimeTrackingStatus.OffDuty => "Jornada finalizada",
