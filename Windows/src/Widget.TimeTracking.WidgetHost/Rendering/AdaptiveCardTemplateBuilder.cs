@@ -375,6 +375,7 @@ internal static class AdaptiveCardTemplateBuilder
               "$when": "${isSignedIn}",
               "style": "default",
               "spacing": "medium",
+              "padding": "default",
               "separator": true,
               "items": [
                 {
