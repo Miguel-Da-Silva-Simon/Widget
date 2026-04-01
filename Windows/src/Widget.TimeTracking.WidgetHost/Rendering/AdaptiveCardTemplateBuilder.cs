@@ -404,7 +404,7 @@ internal static class AdaptiveCardTemplateBuilder
                 {
                   "type": "Container",
                   "spacing": "none",
-                  "minHeight": "6px"
+                  "minHeight": "4wpx"
                 },
                 {
                   "type": "TextBlock",
