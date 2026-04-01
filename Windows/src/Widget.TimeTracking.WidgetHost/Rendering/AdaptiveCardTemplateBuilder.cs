@@ -122,6 +122,14 @@ internal static class AdaptiveCardTemplateBuilder
         + "<path d='M4.965 8.877L4.998 6.146'/>"
         + "</g></svg>");
 
+    private static readonly string LastShiftIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF' stroke='#5F96F9' stroke-width='1'/>"
+        + "<g transform='translate(10,10)' fill='none' stroke='#5F96F9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<circle cx='12' cy='12' r='7'/>"
+        + "<path d='M12 9V12.2L14.5 13.5'/>"
+        + "</g></svg>");
+
     /// <summary>CTA sesión cerrada: mismo tamaño que el resto de botones (44×44, #5F96F9 + icono logout).</summary>
     private static readonly string OpenAppBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
@@ -363,52 +371,181 @@ internal static class AdaptiveCardTemplateBuilder
               ]
             },
             {
-              "type": "TextBlock",
+              "type": "Container",
               "$when": "${isSignedIn}",
-              "text": "${statusHeadline}",
-              "size": "large",
-              "weight": "bolder",
-              "color": "dark",
-              "wrap": true,
-              "spacing": "medium"
-            },
-            { 
-              "type": "TextBlock",
-              "$when": "${isSignedIn}",
-              "text": "${statusDetail}",
-              "size": "small",
-              "color": "dark",
-              "weight": "lighter",
-              "wrap": true,
-              "spacing": "medium"
-            },
-            {
-              "type": "ColumnSet",
-              "$when": "${isSignedIn}",
+              "style": "default",
               "spacing": "medium",
-              "columns": [
+              "separator": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                { "type": "TextBlock", "text": "Última jornada", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${lastCompletedShiftDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
-                  ]
+                  "type": "TextBlock",
+                  "text": "${statusHeadline}",
+                  "size": "medium",
+                  "weight": "bolder",
+                  "color": "dark",
+                  "wrap": true,
+                  "spacing": "small"
                 },
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                    { "type": "TextBlock", "text": "Descanso", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${coffeeTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
-                  ]
+                  "type": "TextBlock",
+                  "text": "${statusDetail}",
+                  "size": "small",
+                  "color": "dark",
+                  "weight": "lighter",
+                  "wrap": true,
+                  "spacing": "small"
                 },
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                    { "type": "TextBlock", "text": "Comida", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${foodTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
+                  "type": "ColumnSet",
+                  "spacing": "medium",
+                  "columns": [
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "items": [
+                        {
+                          "type": "ColumnSet",
+                          "spacing": "none",
+                          "columns": [
+                            {
+                              "type": "Column",
+                              "width": "auto",
+                              "items": [
+                                {
+                                  "type": "Image",
+                                  "url": "{{LastShiftIcon}}",
+                                  "width": "16px",
+                                  "height": "16px"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "Column",
+                              "width": "stretch",
+                              "verticalContentAlignment": "center",
+                              "items": [
+                                {
+                                  "type": "TextBlock",
+                                  "text": "Jornada",
+                                  "size": "small",
+                                  "color": "dark",
+                                  "weight": "lighter",
+                                  "spacing": "none",
+                                  "wrap": true
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${lastCompletedShiftDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "wrap": true
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "items": [
+                        {
+                          "type": "ColumnSet",
+                          "spacing": "none",
+                          "columns": [
+                            {
+                              "type": "Column",
+                              "width": "auto",
+                              "items": [
+                                {
+                                  "type": "Image",
+                                  "url": "{{CoffeeBreak}}",
+                                  "width": "16px",
+                                  "height": "16px"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "Column",
+                              "width": "stretch",
+                              "verticalContentAlignment": "center",
+                              "items": [
+                                {
+                                  "type": "TextBlock",
+                                  "text": "Descanso",
+                                  "size": "small",
+                                  "color": "dark",
+                                  "weight": "lighter",
+                                  "spacing": "none",
+                                  "wrap": true
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${coffeeTodayDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "wrap": true
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "items": [
+                        {
+                          "type": "ColumnSet",
+                          "spacing": "none",
+                          "columns": [
+                            {
+                              "type": "Column",
+                              "width": "auto",
+                              "items": [
+                                {
+                                  "type": "Image",
+                                  "url": "{{FoodBreak}}",
+                                  "width": "16px",
+                                  "height": "16px"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "Column",
+                              "width": "stretch",
+                              "verticalContentAlignment": "center",
+                              "items": [
+                                {
+                                  "type": "TextBlock",
+                                  "text": "Comida",
+                                  "size": "small",
+                                  "color": "dark",
+                                  "weight": "lighter",
+                                  "spacing": "none",
+                                  "wrap": true
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${foodTodayDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "wrap": true
+                        }
+                      ]
+                    }
                   ]
                 }
               ]
@@ -463,6 +600,7 @@ internal static class AdaptiveCardTemplateBuilder
             .Replace("{{EntryDisabled}}", EntryDisabled)
             .Replace("{{StopBlue}}", StopBlue)
             .Replace("{{StopDisabled}}", StopDisabled)
+            .Replace("{{LastShiftIcon}}", LastShiftIcon)
             .Replace("{{CoffeeBlue}}", CoffeeBlue)
             .Replace("{{CoffeeBreak}}", CoffeeBreak)
             .Replace("{{CoffeeDisabled}}", CoffeeDisabled)
