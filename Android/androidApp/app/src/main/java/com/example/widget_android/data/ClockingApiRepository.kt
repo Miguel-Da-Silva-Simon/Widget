@@ -128,6 +128,16 @@ class ClockingApiRepository(context: Context) {
 
     suspend fun readUserName(): String? = session.readUserName()
 
+    suspend fun readProfilePhotoUri(): String? = session.readProfilePhotoUri()
+
+    suspend fun saveProfilePhotoUri(uri: String) {
+        session.saveProfilePhotoUri(uri)
+    }
+
+    suspend fun clearProfilePhotoUri() {
+        session.clearProfilePhotoUri()
+    }
+
     suspend fun readEntryStartMs(): Long = session.readEntryStartMs()
 
     suspend fun readBreakStartMs(): Long = session.readBreakStartMs()

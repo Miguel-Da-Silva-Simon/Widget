@@ -3,6 +3,7 @@ package com.example.widget_android.widget
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
@@ -27,6 +28,7 @@ internal object FichajeWidgetBinder {
     private const val PI_PRIMARY = 301
     private const val PI_BREAK = 302
     private const val PI_MEAL = 303
+    private const val PI_PROFILE = 304
     private const val NOOP_ACTION = "NOOP"
     private const val DEFAULT_USER_NAME = "Practicas"
     private const val INACTIVE_TIMER = "--:--:--"
@@ -37,8 +39,10 @@ internal object FichajeWidgetBinder {
 
         val token = app.appDataStore.data.map { it[PrefKeys.TOKEN] }.first()
         val userName = app.appDataStore.data.map { it[PrefKeys.USER_NAME] }.first().orEmpty()
+        val profilePhotoUri = app.appDataStore.data.map { it[PrefKeys.PROFILE_PHOTO_URI] }.first().orEmpty()
 
         views.setTextViewText(R.id.widget_name, userName.ifBlank { DEFAULT_USER_NAME })
+        applyProfilePhoto(views, profilePhotoUri)
 
         if (token.isNullOrBlank()) {
             applySignedOutState(views)
@@ -67,7 +71,11 @@ internal object FichajeWidgetBinder {
         bindClicks(
             app,
             views,
-            actions.widgetPrimaryAction?.name ?: NOOP_ACTION,
+            if (state.isFinished) {
+                FichajeWidgetActionReceiver.WIDGET_ACTION_START_NEW_WORKDAY
+            } else {
+                actions.widgetPrimaryAction?.name ?: NOOP_ACTION
+            },
             actions.breakAction?.name ?: NOOP_ACTION,
             actions.mealAction?.name ?: NOOP_ACTION
         )
@@ -159,12 +167,12 @@ internal object FichajeWidgetBinder {
             AttendanceState.BREAK_ACTIVE -> {
                 views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_break)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_amber)
-                views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster_break)
+                views.setInt(R.id.widget_action_group, "setBackgroundResource", android.R.color.transparent)
             }
             AttendanceState.MEAL_ACTIVE -> {
                 views.setInt(R.id.widget_timer_panel, "setBackgroundResource", R.drawable.bg_timer_capsule_meal)
                 views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_orange)
-                views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
+                views.setInt(R.id.widget_action_group, "setBackgroundResource", android.R.color.transparent)
             }
             AttendanceState.WORKING -> {
                 applyDefaultChrome(views)
@@ -179,9 +187,10 @@ internal object FichajeWidgetBinder {
         state: ClockingState,
         actions: ClockingActionBindings
     ) {
-        val primaryIsExit = actions.widgetPrimaryAction == AttendanceAction.CLOCK_OUT || state.isFinished
-        val primaryEnabled = actions.widgetPrimaryAction != null
-        val primaryHighlighted = state.nextAllowedAction == actions.widgetPrimaryAction
+        val primaryIsExit = !state.isFinished && actions.widgetPrimaryAction == AttendanceAction.CLOCK_OUT
+        val primaryEnabled = state.isFinished || actions.widgetPrimaryAction != null
+        val primaryHighlighted =
+            if (state.isFinished) true else state.nextAllowedAction == actions.widgetPrimaryAction
         setActionAppearance(
             views,
             R.id.widget_icon_primary,
@@ -220,10 +229,14 @@ internal object FichajeWidgetBinder {
         returnHint: String?
     ) {
         val primaryDescription =
-            when (actions.widgetPrimaryAction) {
-                AttendanceAction.CLOCK_IN -> "Entrada"
-                AttendanceAction.CLOCK_OUT -> "Salida"
-                else -> if (state.isFinished) "Salida no disponible" else "Entrada no disponible"
+            if (state.isFinished) {
+                "Empezar nueva jornada"
+            } else {
+                when (actions.widgetPrimaryAction) {
+                    AttendanceAction.CLOCK_IN -> "Entrada"
+                    AttendanceAction.CLOCK_OUT -> "Salida"
+                    else -> "Entrada no disponible"
+                }
             }
         val breakDescription =
             when (actions.breakAction) {
@@ -273,6 +286,17 @@ internal object FichajeWidgetBinder {
         views.setTextViewText(R.id.widget_chronometer, INACTIVE_TIMER)
     }
 
+    private fun applyProfilePhoto(views: RemoteViews, photoUri: String) {
+        if (photoUri.isBlank()) {
+            views.setImageViewResource(R.id.widget_profile_photo, R.drawable.ic_profile_placeholder)
+            return
+        }
+
+        runCatching { Uri.parse(photoUri) }
+            .onSuccess { views.setImageViewUri(R.id.widget_profile_photo, it) }
+            .onFailure { views.setImageViewResource(R.id.widget_profile_photo, R.drawable.ic_profile_placeholder) }
+    }
+
     private fun applyReturnHint(views: RemoteViews, text: String?) {
         if (text.isNullOrBlank()) {
             views.setViewVisibility(R.id.widget_return_time, View.GONE)
@@ -289,7 +313,7 @@ internal object FichajeWidgetBinder {
     private fun applyDefaultChrome(views: RemoteViews) {
         views.setInt(R.id.widget_timer_block, "setBackgroundResource", R.drawable.bg_timer_capsule)
         views.setInt(R.id.widget_status_dot, "setBackgroundResource", R.drawable.bg_dot_gray)
-        views.setInt(R.id.widget_action_group, "setBackgroundResource", R.drawable.bg_action_cluster)
+        views.setInt(R.id.widget_action_group, "setBackgroundResource", android.R.color.transparent)
     }
 
     private fun setActionAppearance(
@@ -320,7 +344,7 @@ internal object FichajeWidgetBinder {
             }
 
         return returnAtMs?.let {
-            "Vuelves a las ${AttendanceTimeUtils.formatClockHHmm(it)}"
+            "Vuelve ${AttendanceTimeUtils.formatClockHHmm(it)}"
         }
     }
 
@@ -378,6 +402,16 @@ internal object FichajeWidgetBinder {
         val primaryPendingIntent = pi(primaryAction, PI_PRIMARY)
         val breakPendingIntent = pi(breakAction, PI_BREAK)
         val mealPendingIntent = pi(mealAction, PI_MEAL)
+        val profilePendingIntent =
+            PendingIntent.getActivity(
+                app,
+                PI_PROFILE,
+                Intent(app, WidgetProfilePhotoPickerActivity::class.java).apply {
+                    setPackage(app.packageName)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                },
+                flags
+            )
 
         views.setOnClickPendingIntent(R.id.widget_btn_primary, primaryPendingIntent)
         views.setOnClickPendingIntent(R.id.widget_icon_primary, primaryPendingIntent)
@@ -385,6 +419,8 @@ internal object FichajeWidgetBinder {
         views.setOnClickPendingIntent(R.id.widget_icon_break, breakPendingIntent)
         views.setOnClickPendingIntent(R.id.widget_btn_meal, mealPendingIntent)
         views.setOnClickPendingIntent(R.id.widget_icon_meal, mealPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_btn_profile, profilePendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_profile_photo, profilePendingIntent)
     }
 
     private fun statusTitle(state: ClockingState): String =
