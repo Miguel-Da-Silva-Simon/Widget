@@ -124,14 +124,14 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string LastShiftIcon = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
-        + "<g fill='none' stroke='#B5CCF5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g fill='none' stroke='#5F96F9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>"
         + "<circle cx='10' cy='10' r='6.25'/>"
         + "<path d='M10 7.25V10.25L12.25 11.5'/>"
         + "</g></svg>");
 
     private static readonly string CoffeeSummaryIcon = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
-        + "<g transform='translate(3,3)' fill='none' stroke='#B5CCF5' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#5F96F9' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -142,7 +142,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string FoodSummaryIcon = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
-        + "<g transform='translate(3,3)' fill='none' stroke='#B5CCF5' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#5F96F9' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
         + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
         + "<path d='M7.071 4.122L7.109 1.05'/>"
