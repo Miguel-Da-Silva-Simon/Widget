@@ -503,10 +503,11 @@ internal static class AdaptiveCardTemplateBuilder
             : string.Empty;
     }
 
-    private static string BuildTimerChipSvg(string sessionCounter)
+    private static string BuildTimerChipSvg(string sessionCounter, bool isActive)
     {
         var normalizedCounter = NormalizeTimerCounter(sessionCounter);
-        var glyphMarkup = BuildTimerGlyphMarkup(normalizedCounter);
+        var bulletColor = isActive ? "#10B981" : "#EF4444";
+        var glyphMarkup = BuildTimerGlyphMarkup(normalizedCounter, bulletColor);
         return SvgDataUri(
             "<svg xmlns='http://www.w3.org/2000/svg' width='110' height='44' viewBox='0 0 110 44'>"
             + "<rect x='0.5' y='0.5' width='109' height='43' rx='12' ry='12' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
@@ -536,7 +537,7 @@ internal static class AdaptiveCardTemplateBuilder
             : "00:00:00";
     }
 
-    private static string BuildTimerGlyphMarkup(string timerText)
+    private static string BuildTimerGlyphMarkup(string timerText, string bulletColor)
     {
         const double bulletDiameter = 4;
         const double bulletGap = 9.1;
@@ -549,7 +550,7 @@ internal static class AdaptiveCardTemplateBuilder
         var groupStartX = (chipWidth - (bulletDiameter + bulletGap + timerWidth)) / 2;
         var cursor = groupStartX + bulletDiameter + bulletGap;
 
-        markup.Append($"<circle cx='{SvgValue(groupStartX + (bulletDiameter / 2))}' cy='22' r='1.9' fill='#111827' opacity='1'/>");
+        markup.Append($"<circle cx='{SvgValue(groupStartX + (bulletDiameter / 2))}' cy='22' r='1.9' fill='{bulletColor}' opacity='1'/>");
         markup.Append("<g fill='none' stroke='#111827' stroke-width='1.62' stroke-linecap='round' stroke-linejoin='round'>");
 
         foreach (var character in timerText)
@@ -643,7 +644,7 @@ internal static class AdaptiveCardTemplateBuilder
                     CoffeeTodayDuration = string.Empty,
                     FoodTodayDuration = string.Empty,
                     TimelineText = string.Empty,
-                    TimerChipSvg = BuildTimerChipSvg("00:00:00"),
+                    TimerChipSvg = BuildTimerChipSvg("00:00:00", false),
                     CoffeeVerb = "start-coffee-break",
                     FoodVerb = "start-food-break",
                     ShowPrimaryActionInteractive = false,
@@ -670,6 +671,11 @@ internal static class AdaptiveCardTemplateBuilder
     {
         var safeProfilePhotoUrl = SanitizeProfilePhotoUrl(signedIn.ProfilePhotoUrl);
 
+        var isActiveSession =
+            signedIn.ActiveBreakType == BreakType.None
+            && !signedIn.CanClockIn
+            && signedIn.CanClockOut;
+
         return JsonSerializer.Serialize(
             new
             {
@@ -695,7 +701,7 @@ internal static class AdaptiveCardTemplateBuilder
                 signedIn.CoffeeTodayDuration,
                 signedIn.FoodTodayDuration,
                 signedIn.TimelineText,
-                TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter),
+                TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter, isActiveSession),
                 CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
                     ? "end-coffee-break" : "start-coffee-break",
                 FoodVerb = signedIn.ActiveBreakType == BreakType.Food
