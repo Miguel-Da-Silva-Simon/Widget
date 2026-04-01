@@ -380,7 +380,7 @@ internal static class AdaptiveCardTemplateBuilder
                 {
                   "type": "TextBlock",
                   "text": "${statusHeadline}",
-                  "size": "medium",
+                  "size": "large",
                   "weight": "bolder",
                   "color": "dark",
                   "wrap": true,
@@ -552,7 +552,7 @@ internal static class AdaptiveCardTemplateBuilder
             },
             {
               "type": "Container",
-              "$when": "${isSignedIn}",
+              "$when": "${isSignedIn && $host.widgetSize == \"large\"}",
               "spacing": "large",
               "items": [
                 {
@@ -621,9 +621,9 @@ internal static class AdaptiveCardTemplateBuilder
         // Franja superior azul (barra de título).
         svg.Append("<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>");
         // Sombra suave detrás de la tarjeta principal.
-        svg.Append("<rect x='16' y='68' width='368' height='708' rx='18' fill='#B5CCF5' opacity='0.35'/>");
+        svg.Append("<rect x='16' y='68' width='368' height='350' rx='18' fill='#B5CCF5' opacity='0.35'/>");
         // Tarjeta principal blanca con borde sutil.
-        svg.Append("<rect x='10' y='202' width='380' height='708' rx='18' fill='#FFFFFF' stroke='#D5E5FA' stroke-width='1'/>");
+        svg.Append("<rect x='10' y='202' width='380' height='450' rx='18' fill='#FFFFFF' stroke='#D5E5FA' stroke-width='1'/>");
         svg.Append("</svg>");
         return SvgDataUri(svg.ToString());
     }
