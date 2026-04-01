@@ -438,8 +438,8 @@ internal static class AdaptiveCardTemplateBuilder
                         {
                           "type": "Image",
                           "url": "{{LastShiftIcon}}",
-                          "width": "16px",
-                          "height": "16px",
+                          "width": "30px",
+                          "height": "30px",
                           "horizontalAlignment": "center"
                         },
                         {
@@ -477,8 +477,8 @@ internal static class AdaptiveCardTemplateBuilder
                         {
                           "type": "Image",
                           "url": "{{CoffeeSummaryIcon}}",
-                          "width": "16px",
-                          "height": "16px",
+                          "width": "30px",
+                          "height": "30px",
                           "horizontalAlignment": "center"
                         },
                         {
@@ -516,8 +516,8 @@ internal static class AdaptiveCardTemplateBuilder
                         {
                           "type": "Image",
                           "url": "{{FoodSummaryIcon}}",
-                          "width": "16px",
-                          "height": "16px",
+                          "width": "30px",
+                          "height": "30px",
                           "horizontalAlignment": "center"
                         },
                         {
