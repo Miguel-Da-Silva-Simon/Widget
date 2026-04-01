@@ -32,14 +32,19 @@ class FichajeWidgetActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != ACTION_CLICK) return
         val raw = intent.getStringExtra(EXTRA_WIDGET_ACTION) ?: return
-        val action = AttendanceAction.entries.firstOrNull { it.name == raw } ?: return
         val app = context.applicationContext
         val scope =
             (app as? WidgetApp)?.applicationScope
                 ?: CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch {
             try {
-                processAction(app, action)
+                when (raw) {
+                    WIDGET_ACTION_START_NEW_WORKDAY -> startNewWorkday(app)
+                    else -> {
+                        val action = AttendanceAction.entries.firstOrNull { it.name == raw } ?: return@launch
+                        processAction(app, action)
+                    }
+                }
             } finally {
                 FichajeWidgetUpdater.updateAll(app)
             }
@@ -56,6 +61,24 @@ class FichajeWidgetActionReceiver : BroadcastReceiver() {
         val repo = ClockingApiRepository(app)
         val result = runWithRetry { repo.doAction(action) }
         result.onFailure { toast(app, it.toUserMessage()) }
+    }
+
+    private suspend fun startNewWorkday(app: Context) {
+        val token = app.appDataStore.data.map { it[PrefKeys.TOKEN] }.first()
+        if (token.isNullOrBlank()) {
+            toast(app, "Inicia sesi\u00f3n en la app para usar el widget")
+            return
+        }
+        TokenHolder.token = token
+        val repo = ClockingApiRepository(app)
+        val resetResult = runWithRetry { repo.reset() }
+        if (resetResult.isFailure) {
+            resetResult.exceptionOrNull()?.let { toast(app, it.toUserMessage()) }
+            return
+        }
+
+        val clockInResult = runWithRetry { repo.doAction(AttendanceAction.CLOCK_IN) }
+        clockInResult.onFailure { toast(app, it.toUserMessage()) }
     }
 
     private suspend fun runWithRetry(block: suspend () -> Result<ClockingState>): Result<ClockingState> {
@@ -79,5 +102,6 @@ class FichajeWidgetActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_CLICK = "com.example.widget_android.WIDGET_CLICK"
         const val EXTRA_WIDGET_ACTION = "widget_action"
+        const val WIDGET_ACTION_START_NEW_WORKDAY = "START_NEW_WORKDAY"
     }
 }

@@ -1,6 +1,12 @@
 package com.example.widget_android.ui
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.ImageView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.widget_android.R
 import com.example.widget_android.data.AttendanceAction
 import com.example.widget_android.data.AttendanceDurations
@@ -82,11 +90,26 @@ fun DashboardScreen(
     val context = LocalContext.current
     var state by remember { mutableStateOf<ClockingState?>(null) }
     var userName by remember { mutableStateOf("") }
+    var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var tick by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
+    val photoPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@rememberLauncherForActivityResult
+            scope.launch {
+                runCatching {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+                repository.saveProfilePhotoUri(uri.toString())
+                profilePhotoUri = uri.toString()
+            }
+        }
 
     suspend fun refreshWidget() {
         FichajeWidgetUpdater.updateAll(context.applicationContext)
@@ -98,6 +121,17 @@ fun DashboardScreen(
             onSuccess = {
                 state = it
                 refreshWidget()
+            },
+            onFailure = { error = it.toUserMessage() }
+        )
+    }
+
+    suspend fun startNewWorkday() {
+        repository.reset().fold(
+            onSuccess = {
+                state = it
+                refreshWidget()
+                runAttendanceAction(AttendanceAction.CLOCK_IN)
             },
             onFailure = { error = it.toUserMessage() }
         )
@@ -138,6 +172,7 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         userName = repository.readUserName().orEmpty()
+        profilePhotoUri = repository.readProfilePhotoUri()
         reload()
     }
 
@@ -166,23 +201,6 @@ fun DashboardScreen(
             .verticalScroll(scroll)
             .padding(horizontal = 22.dp, vertical = 18.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            TextButton(
-                onClick = {
-                    scope.launch {
-                        repository.logout()
-                        refreshWidget()
-                        onLoggedOut()
-                    }
-                }
-            ) {
-                Text("Cerrar sesión", color = SygnaBlue, fontWeight = FontWeight.Medium)
-            }
-        }
-
         when {
             loading && s == null -> {
                 Box(Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
@@ -210,19 +228,101 @@ fun DashboardScreen(
 
         if (s == null) return@Column
 
-        Text(
-            text = "Hola,",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Gray500
-        )
-        Text(
-            text = "${userName.ifBlank { "Usuario" }}!",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = SygnaBlue,
-                fontSize = 28.sp
-            )
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.widget_brand_icon),
+                            contentDescription = "Sygna",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Text(
+                            text = "Sygna",
+                            color = SygnaBlue,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Surface(
+                        onClick = {
+                            scope.launch {
+                                repository.logout()
+                                refreshWidget()
+                                onLoggedOut()
+                            }
+                        },
+                        modifier = Modifier.size(34.dp),
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
+                        color = White,
+                        tonalElevation = 0.dp,
+                        shadowElevation = 0.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Cerrar sesión",
+                                modifier = Modifier.size(18.dp),
+                                tint = SygnaBlue
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                ProfilePhotoAvatar(
+                    photoUri = profilePhotoUri,
+                    userName = userName,
+                    modifier = Modifier.size(72.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = { photoPicker.launch(arrayOf("image/*")) },
+                    modifier = Modifier.height(34.dp),
+                    shape = RoundedCornerShape(999.dp),
+                    border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = White,
+                        contentColor = SygnaBlue
+                    )
+                ) {
+                    Text("Actualizar foto", fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Bienvenido, ${userName.ifBlank { "Usuario" }}",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = SygnaBlue,
+                        fontSize = 18.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(22.dp))
 
@@ -270,6 +370,7 @@ fun DashboardScreen(
         val hiMeal = mealHit && nextAction == actions.mealAction
         val hiSalida = salidaHit && nextAction == actions.clockOutAction
         val canChangeMode = s.canChangeMode()
+        val workedSummary = "Has trabajado ${formatElapsed(totalSeconds)}"
 
         Column(modifier = Modifier.fillMaxWidth()) {
             val timerShape = RoundedCornerShape(10.dp)
@@ -351,6 +452,15 @@ fun DashboardScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
+                    }
+                    if (s.isFinished) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = workedSummary,
+                            fontSize = 11.sp,
+                            color = Gray500,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }
@@ -435,10 +545,14 @@ fun DashboardScreen(
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                Text("Siguiente", style = MaterialTheme.typography.labelMedium, color = Gray500)
+                Text(
+                    if (s.isFinished) "Tiempo trabajado" else "Siguiente",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Gray500
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = s.nextStepLabel,
+                    text = if (s.isFinished) workedSummary else s.nextStepLabel,
                     style = MaterialTheme.typography.titleMedium,
                     color = SygnaBlue,
                     fontWeight = FontWeight.SemiBold
@@ -493,18 +607,22 @@ fun DashboardScreen(
         OutlinedButton(
             onClick = {
                 scope.launch {
-                    val action = nextAction ?: AttendanceAction.CLOCK_IN
-                    repository.doAction(action).fold(
-                        onSuccess = {
-                            state = it
-                            refreshWidget()
-                        },
-                        onFailure = { error = it.toUserMessage() }
-                    )
+                    if (s.isFinished) {
+                        startNewWorkday()
+                    } else {
+                        val action = nextAction ?: AttendanceAction.CLOCK_IN
+                        repository.doAction(action).fold(
+                            onSuccess = {
+                                state = it
+                                refreshWidget()
+                            },
+                            onFailure = { error = it.toUserMessage() }
+                        )
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !s.isFinished,
+            enabled = s.isFinished || nextAction != null,
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, SygnaBlue),
             colors = ButtonDefaults.outlinedButtonColors(
@@ -513,37 +631,8 @@ fun DashboardScreen(
             )
         ) {
             Text(
-                if (s.isFinished) "Jornada finalizada" else "Fichar siguiente",
+                if (s.isFinished) "Empezar nueva jornada" else "Fichar siguiente",
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(vertical = 6.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedButton(
-            onClick = {
-                scope.launch {
-                    repository.reset().fold(
-                        onSuccess = {
-                            state = it
-                            refreshWidget()
-                        },
-                        onFailure = { error = it.toUserMessage() }
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Gray500,
-                containerColor = White
-            ),
-            border = BorderStroke(1.dp, Gray300)
-        ) {
-            Text(
-                "Reiniciar",
-                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(vertical = 6.dp)
             )
         }
@@ -665,4 +754,59 @@ private fun formatElapsed(totalSeconds: Long): String {
     val m = (totalSeconds % 3600) / 60
     val sec = totalSeconds % 60
     return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, sec)
+}
+
+@Composable
+private fun ProfilePhotoAvatar(
+    photoUri: String?,
+    userName: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = SygnaBlueLight,
+        border = BorderStroke(2.dp, SygnaBlue.copy(alpha = 0.18f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        if (photoUri.isNullOrBlank()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = profileInitials(userName),
+                    color = SygnaBlue,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+            }
+        } else {
+            AndroidView(
+                factory = { viewContext ->
+                    ImageView(viewContext).apply {
+                        scaleType = ImageView.ScaleType.CENTER_CROP
+                    }
+                },
+                update = { imageView ->
+                    imageView.setImageURI(null)
+                    imageView.setImageURI(Uri.parse(photoUri))
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+private fun profileInitials(userName: String): String {
+    val parts = userName
+        .trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+    return when {
+        parts.isEmpty() -> "U"
+        parts.size == 1 -> parts.first().take(1).uppercase(Locale.getDefault())
+        else -> (parts.first().take(1) + parts.last().take(1)).uppercase(Locale.getDefault())
+    }
 }
