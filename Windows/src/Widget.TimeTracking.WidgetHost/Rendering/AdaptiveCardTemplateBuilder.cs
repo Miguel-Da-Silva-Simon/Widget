@@ -18,14 +18,14 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string EntryBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF'/>"
         + "<g transform='translate(10,10) scale(1.6)'>"
-        + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='white' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
+        + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='#5F96F9' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
         + "</g></svg>");
 
     private static readonly string EntryDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(10,10) scale(1.6)'>"
         + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='white' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
         + "</g></svg>");
@@ -39,7 +39,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string StopDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(8,8)'>"
         + "<rect x='4' y='4' width='20' height='20' rx='5' stroke='white' stroke-width='2.5' fill='none'/>"
         + "</g></svg>");
@@ -58,8 +58,8 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string CoffeeBreak = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#B8D0F0'/>"
-        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF'/>"
+        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='#5F96F9' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -70,7 +70,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string CoffeeDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
@@ -96,8 +96,8 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string FoodBreak = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#B8D0F0'/>"
-        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF'/>"
+        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='#5F96F9' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
         + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
         + "<path d='M7.071 4.122L7.109 1.05'/>"
@@ -110,7 +110,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string FoodDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
         + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
