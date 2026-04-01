@@ -123,11 +123,34 @@ internal static class AdaptiveCardTemplateBuilder
         + "</g></svg>");
 
     private static readonly string LastShiftIcon = SvgDataUri(
-        "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#FFFFFF' stroke='#5F96F9' stroke-width='1'/>"
-        + "<g transform='translate(10,10)' fill='none' stroke='#5F96F9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>"
-        + "<circle cx='12' cy='12' r='7'/>"
-        + "<path d='M12 9V12.2L14.5 13.5'/>"
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g fill='none' stroke='#B5CCF5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<circle cx='10' cy='10' r='6.25'/>"
+        + "<path d='M10 7.25V10.25L12.25 11.5'/>"
+        + "</g></svg>");
+
+    private static readonly string CoffeeSummaryIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#B5CCF5' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
+        + "<path d='M3.44 1.968V1.408'/>"
+        + "<path d='M5.94 1.968V1.408'/>"
+        + "<path d='M8.44 1.968V1.408'/>"
+        + "<path d='M13.75 8.228C13.75 9.678 12.57 10.858 11.12 10.858V5.598C12.57 5.598 13.75 6.778 13.75 8.228Z'/>"
+        + "<path d='M1.25 7.498H10.94'/>"
+        + "</g></svg>");
+
+    private static readonly string FoodSummaryIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#B5CCF5' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
+        + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
+        + "<path d='M7.071 4.122L7.109 1.05'/>"
+        + "<path d='M4.903 13.999C4.337 13.992 3.884 13.528 3.891 12.962L3.941 8.865L5.989 8.89L5.939 12.987C5.932 13.553 5.468 14.006 4.903 13.999Z'/>"
+        + "<path d='M5.681 6.154L4.315 6.138C3.561 6.129 2.957 5.51 2.966 4.756L2.974 4.073L7.071 4.122L7.063 4.805C7.054 5.559 6.435 6.163 5.681 6.154Z'/>"
+        + "<path d='M2.974 4.073L3.011 1'/>"
+        + "<path d='M5.023 4.098L5.06 1.025'/>"
+        + "<path d='M4.965 8.877L4.998 6.146'/>"
         + "</g></svg>");
 
     /// <summary>CTA sesión cerrada: mismo tamaño que el resto de botones (44×44, #5F96F9 + icono logout).</summary>
@@ -463,7 +486,7 @@ internal static class AdaptiveCardTemplateBuilder
                               "items": [
                                 {
                                   "type": "Image",
-                                  "url": "{{CoffeeBreak}}",
+                                  "url": "{{CoffeeSummaryIcon}}",
                                   "width": "16px",
                                   "height": "16px"
                                 }
@@ -512,7 +535,7 @@ internal static class AdaptiveCardTemplateBuilder
                               "items": [
                                 {
                                   "type": "Image",
-                                  "url": "{{FoodBreak}}",
+                                  "url": "{{FoodSummaryIcon}}",
                                   "width": "16px",
                                   "height": "16px"
                                 }
@@ -602,6 +625,8 @@ internal static class AdaptiveCardTemplateBuilder
             .Replace("{{StopBlue}}", StopBlue)
             .Replace("{{StopDisabled}}", StopDisabled)
             .Replace("{{LastShiftIcon}}", LastShiftIcon)
+            .Replace("{{CoffeeSummaryIcon}}", CoffeeSummaryIcon)
+            .Replace("{{FoodSummaryIcon}}", FoodSummaryIcon)
             .Replace("{{CoffeeBlue}}", CoffeeBlue)
             .Replace("{{CoffeeBreak}}", CoffeeBreak)
             .Replace("{{CoffeeDisabled}}", CoffeeDisabled)
