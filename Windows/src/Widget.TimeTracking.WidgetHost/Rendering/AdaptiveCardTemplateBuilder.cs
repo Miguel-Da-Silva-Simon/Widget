@@ -372,7 +372,7 @@ internal static class AdaptiveCardTemplateBuilder
               "wrap": true,
               "spacing": "medium"
             },
-            {
+            { 
               "type": "TextBlock",
               "$when": "${isSignedIn}",
               "text": "${statusDetail}",
