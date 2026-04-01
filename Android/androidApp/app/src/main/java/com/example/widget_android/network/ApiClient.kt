@@ -16,9 +16,20 @@ object ApiClient {
     @Volatile
     private var cachedBaseUrl: String? = null
 
+    @Volatile
+    private var widgetRetrofit: Retrofit? = null
+
+    @Volatile
+    private var widgetCachedBaseUrl: String? = null
+
     fun service(context: Context): ClockingApiService {
         val app = context.applicationContext
         return retrofit(app).create(ClockingApiService::class.java)
+    }
+
+    fun widgetService(context: Context): ClockingApiService {
+        val app = context.applicationContext
+        return widgetRetrofit(app).create(ClockingApiService::class.java)
     }
 
     fun effectiveBaseUrl(context: Context): String {
@@ -55,17 +66,57 @@ object ApiClient {
         }
     }
 
+    private fun widgetRetrofit(appContext: Context): Retrofit {
+        val baseUrl = effectiveBaseUrl(appContext)
+        val existing = widgetRetrofit
+        val cached = widgetCachedBaseUrl
+        if (existing != null && cached == baseUrl) return existing
+
+        return synchronized(this) {
+            val current = widgetRetrofit
+            val currentBase = widgetCachedBaseUrl
+            if (current != null && currentBase == baseUrl) {
+                current
+            } else {
+                buildWidgetRetrofit(baseUrl, appContext).also {
+                    widgetRetrofit = it
+                    widgetCachedBaseUrl = baseUrl
+                }
+            }
+        }
+    }
+
+    private fun buildWidgetRetrofit(baseUrl: String, appContext: Context): Retrofit {
+        val app = appContext.applicationContext
+        val client =
+            OkHttpClient.Builder()
+                .addInterceptor(AuthInterceptor())
+                .authenticator(TokenRefreshAuthenticator(app, baseUrl))
+                .connectTimeout(8, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .callTimeout(15, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
+                .build()
+
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
     private fun buildRetrofit(baseUrl: String, appContext: Context): Retrofit {
         val app = appContext.applicationContext
         val client =
             OkHttpClient.Builder()
                 .addInterceptor(AuthInterceptor())
                 .authenticator(TokenRefreshAuthenticator(app, baseUrl))
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(45, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .callTimeout(90, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .callTimeout(25, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
                 .build()
 
         return Retrofit.Builder()

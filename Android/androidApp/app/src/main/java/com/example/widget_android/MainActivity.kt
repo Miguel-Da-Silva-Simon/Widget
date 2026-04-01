@@ -29,21 +29,19 @@ import com.example.widget_android.ui.LoginScreen
 import com.example.widget_android.ui.QuickActionDestination
 import com.example.widget_android.ui.QuickActionScreen
 import com.example.widget_android.widget.FichajeWidgetUpdater
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
     private var requestedDestination by mutableStateOf<QuickActionDestination?>(null)
+    private var localSessionRefreshSignal by mutableStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedDestination = resolveRequestedDestination(intent)
+        localSessionRefreshSignal++
         setContent {
             WidgetandroidTheme {
                 Surface(
@@ -52,6 +50,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppRoot(
                         requestedDestination = requestedDestination,
+                        localSessionRefreshSignal = localSessionRefreshSignal,
                         onRequestedDestinationConsumed = { consumeRequestedDestination() }
                     )
                 }
@@ -63,6 +62,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         requestedDestination = resolveRequestedDestination(intent)
+        localSessionRefreshSignal++
     }
 
     private fun resolveRequestedDestination(intent: Intent?): QuickActionDestination? =
@@ -79,6 +79,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppRoot(
     requestedDestination: QuickActionDestination?,
+    localSessionRefreshSignal: Int,
     onRequestedDestinationConsumed: () -> Unit
 ) {
     val context = LocalContext.current
@@ -93,26 +94,26 @@ private fun AppRoot(
     val activeDestination = QuickActionDestination.fromValue(activeDestinationValue)
 
     LaunchedEffect(Unit) {
-        var restored = withContext(Dispatchers.IO) { repository.restoreSession() }
-        if (restored.isFailure) {
-            val e = restored.exceptionOrNull()
-            if (e is SocketTimeoutException || e is ConnectException) {
-                delay(250)
-                restored = withContext(Dispatchers.IO) { repository.restoreSession() }
+        val storedToken = withContext(Dispatchers.IO) { session.readToken() }
+        token = storedToken
+        TokenHolder.token = storedToken
+        if (!storedToken.isNullOrBlank()) {
+            val restoreResult = withContext(Dispatchers.IO) { repository.restoreSession() }
+            if (restoreResult.getOrNull() == true) {
+                val refreshedToken = withContext(Dispatchers.IO) { session.readToken() }
+                token = refreshedToken
+                TokenHolder.token = refreshedToken
             }
         }
-        token = withContext(Dispatchers.IO) { session.readToken() }
-        TokenHolder.token = token
         bootstrapped = true
-        var lastWidgetToken: String? = null
-        session.authTokenFlow.collectLatest { t ->
-            token = t
-            TokenHolder.token = t
-            val changed = t != lastWidgetToken
-            lastWidgetToken = t
-            if (changed) {
-                FichajeWidgetUpdater.updateAll(context.applicationContext)
-            }
+    }
+
+    LaunchedEffect(localSessionRefreshSignal) {
+        if (!bootstrapped) return@LaunchedEffect
+        val storedToken = withContext(Dispatchers.IO) { session.readToken() }
+        token = storedToken
+        if (!storedToken.isNullOrBlank()) {
+            TokenHolder.token = storedToken
         }
     }
 

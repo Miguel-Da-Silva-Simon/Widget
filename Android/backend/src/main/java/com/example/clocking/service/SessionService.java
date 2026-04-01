@@ -54,7 +54,22 @@ public class SessionService {
         if (!session.getUser().getId().equals(userId)) {
             return Optional.empty();
         }
-        if (!session.getTokenHash().equals(hashToken(rawToken))) {
+        session.setLastSeenAt(now);
+        return Optional.of(sessionRepository.save(session));
+    }
+
+    @Transactional
+    public Optional<Session> validateForRefresh(long sessionId, long userId) {
+        Instant now = clock.instant();
+        Optional<Session> found = sessionRepository.findByIdAndRevokedAtIsNull(sessionId);
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        Session session = found.get();
+        if (!session.isActive(now)) {
+            return Optional.empty();
+        }
+        if (!session.getUser().getId().equals(userId)) {
             return Optional.empty();
         }
         session.setLastSeenAt(now);

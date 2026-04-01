@@ -141,7 +141,7 @@ public class ClockingService {
         if (state.next() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay acci\u00f3n siguiente disponible");
         }
-        if (requestedAction == null && isRapidSequentialNext(state)) {
+        if (isRapidSequentialNext(state)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Acci\u00f3n duplicada. Actualiza el estado antes de continuar");
         }
