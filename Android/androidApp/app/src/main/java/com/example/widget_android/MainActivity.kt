@@ -95,15 +95,22 @@ private fun AppRoot(
 
     LaunchedEffect(Unit) {
         val storedToken = withContext(Dispatchers.IO) { session.readToken() }
-        token = storedToken
-        TokenHolder.token = storedToken
         if (!storedToken.isNullOrBlank()) {
+            TokenHolder.token = storedToken
             val restoreResult = withContext(Dispatchers.IO) { repository.restoreSession() }
-            if (restoreResult.getOrNull() == true) {
+            if (restoreResult.isSuccess && restoreResult.getOrNull() == true) {
                 val refreshedToken = withContext(Dispatchers.IO) { session.readToken() }
                 token = refreshedToken
                 TokenHolder.token = refreshedToken
+            } else {
+                // Si la sesión no es válida (401 o expirada), limpiamos para forzar login
+                token = null
+                TokenHolder.token = null
+                withContext(Dispatchers.IO) { repository.clearLocalSession() }
             }
+        } else {
+            token = null
+            TokenHolder.token = null
         }
         bootstrapped = true
     }

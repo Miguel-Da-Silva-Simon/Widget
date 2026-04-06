@@ -42,9 +42,10 @@ internal sealed class TimeTrackingWidgetViewModelMapper
             : displayName.Trim();
         var profilePhotoUrl = await _userSessionService.GetProfilePhotoDataUriAsync(cancellationToken) ?? string.Empty;
         var activeBreakType = resolvedSnapshot.ActiveBreakType;
+        var primaryDuration = ResolvePrimaryDuration(resolvedSnapshot);
         var sessionCounter = activeBreakType is BreakType.Coffee or BreakType.Food
             ? FormatDurationWithSeconds(resolvedSnapshot.ActiveBreak?.GetDuration(DateTimeOffset.UtcNow) ?? TimeSpan.Zero)
-            : FormatDurationWithSeconds(resolvedSnapshot.Summary.CurrentShiftWorkedDuration);
+            : FormatDurationWithSeconds(NormalizeCounterDuration(resolvedSnapshot, primaryDuration));
 
         return new SignedInWidgetViewModel(
             Title: "Fichaje",
@@ -65,8 +66,8 @@ internal sealed class TimeTrackingWidgetViewModelMapper
             CurrentShiftDuration: FormatDuration(resolvedSnapshot.Summary.CurrentShiftWorkedDuration),
             LastCompletedShiftDuration: FormatDuration(resolvedSnapshot.Summary.LastCompletedShiftWorkedDuration),
             WorkedThisMonthDuration: FormatDuration(resolvedSnapshot.Summary.WorkedThisMonthDuration),
-            CoffeeTodayDuration: FormatDuration(resolvedSnapshot.Summary.CoffeeBreakDurationToday),
-            FoodTodayDuration: FormatDuration(resolvedSnapshot.Summary.FoodBreakDurationToday),
+            CoffeeTodayDuration: FormatBreakDuration(resolvedSnapshot.Summary.CoffeeBreakDurationToday),
+            FoodTodayDuration: FormatBreakDuration(resolvedSnapshot.Summary.FoodBreakDurationToday),
             TimelineText: BuildTimelineText(resolvedSnapshot, culture),
             ActiveBreakType: activeBreakType,
             CanClockIn: availableActions.Contains(TimeTrackingAction.ClockIn),
@@ -82,7 +83,7 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
             TimeTrackingStatus.Working => "Estás trabajando",
-            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de café",
+            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",
             TimeTrackingStatus.OffDuty => "Jornada finalizada",
@@ -92,10 +93,24 @@ internal sealed class TimeTrackingWidgetViewModelMapper
     private static string BuildStatusDetail(TimeTrackingSnapshot snapshot) =>
         snapshot.ActiveBreak switch
         {
-            { IsActive: true, Type: BreakType.Coffee } => $"Café activo · {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            { IsActive: true, Type: BreakType.Food } => $"Comida activa · {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
-            _ => $"Jornada actual · {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}"
+            { IsActive: true, Type: BreakType.Coffee } => $"Cafe activo - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            { IsActive: true, Type: BreakType.Food } => $"Comida activa - {FormatDuration(snapshot.ActiveBreak.GetDuration(DateTimeOffset.UtcNow))}",
+            _ when snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+                => $"Jornada actual - {FormatDuration(snapshot.Summary.CurrentShiftWorkedDuration)}",
+            _ => $"Ultima jornada - {FormatDuration(snapshot.Summary.LastCompletedShiftWorkedDuration)}"
         };
+
+    private static TimeSpan ResolvePrimaryDuration(TimeTrackingSnapshot snapshot) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? snapshot.Summary.CurrentShiftWorkedDuration
+            : snapshot.Summary.LastCompletedShiftWorkedDuration;
+
+    private static TimeSpan NormalizeCounterDuration(TimeTrackingSnapshot snapshot, TimeSpan value) =>
+        snapshot.Status is TimeTrackingStatus.Working or TimeTrackingStatus.OnBreak
+            ? value
+            : value < TimeSpan.FromMinutes(1)
+                ? TimeSpan.Zero
+                : value;
 
     private static string TranslateAction(TimeTrackingAction action) =>
         action switch
@@ -113,24 +128,58 @@ internal sealed class TimeTrackingWidgetViewModelMapper
 
     private static string BuildTimelineText(TimeTrackingSnapshot snapshot, CultureInfo culture)
     {
-        if (snapshot.WorkdayEvents.Count == 0)
+        var timelineEvents = ResolveTimelineEvents(snapshot);
+        if (timelineEvents.Count == 0)
         {
             return "Todavía no hay hitos registrados hoy.";
         }
 
         return string.Join(" · ",
-            snapshot.WorkdayEvents.Select(item =>
+            timelineEvents.Select(item =>
                 $"{item.OccurredAtUtc.ToLocalTime().ToString("HH:mm", culture)} {TranslateEvent(item)}"));
+    }
+
+    private static IReadOnlyList<WorkdayEvent> ResolveTimelineEvents(TimeTrackingSnapshot snapshot)
+    {
+        if (snapshot.WorkdayEvents.Count == 0)
+        {
+            return Array.Empty<WorkdayEvent>();
+        }
+
+        var orderedEvents = snapshot.WorkdayEvents
+            .Where(item => item.EventType is
+                WorkdayEventType.ClockIn
+                or WorkdayEventType.ClockOut
+                or WorkdayEventType.StartCoffeeBreak
+                or WorkdayEventType.EndCoffeeBreak
+                or WorkdayEventType.StartFoodBreak
+                or WorkdayEventType.EndFoodBreak)
+            .OrderBy(item => item.OccurredAtUtc)
+            .ToArray();
+
+        if (orderedEvents.Length == 0)
+        {
+            return Array.Empty<WorkdayEvent>();
+        }
+
+        var lastClockInIndex = Array.FindLastIndex(orderedEvents, item => item.EventType == WorkdayEventType.ClockIn);
+        var scopedEvents = lastClockInIndex >= 0
+            ? orderedEvents.Skip(lastClockInIndex)
+            : orderedEvents;
+
+        return scopedEvents
+            .TakeLast(10)
+            .ToArray();
     }
 
     private static string TranslateEvent(WorkdayEvent item) =>
         item.EventType switch
         {
             WorkdayEventType.ClockIn => "Entrada",
-            WorkdayEventType.StartCoffeeBreak => "Café",
-            WorkdayEventType.EndCoffeeBreak => "Reanudar",
-            WorkdayEventType.StartFoodBreak => "Comida",
-            WorkdayEventType.EndFoodBreak => "Reanudar",
+            WorkdayEventType.StartCoffeeBreak => "Inicio café",
+            WorkdayEventType.EndCoffeeBreak => "Fin café",
+            WorkdayEventType.StartFoodBreak => "Inicio comida",
+            WorkdayEventType.EndFoodBreak => "Fin comida",
             WorkdayEventType.ClockOut => "Salida",
             _ => item.EventType.ToString()
         };
@@ -140,6 +189,9 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         var totalHours = (int)value.TotalHours;
         return $"{totalHours:00}h {value.Minutes:00}m";
     }
+
+    private static string FormatBreakDuration(TimeSpan value) =>
+        FormatDuration(value);
 
     private static string FormatDurationWithSeconds(TimeSpan value)
     {
