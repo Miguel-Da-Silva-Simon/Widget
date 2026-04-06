@@ -437,7 +437,8 @@ fun DashboardScreen(
         val salidaHit = actions.clockOutEnabled
         val nextAction = s.nextAllowedAction
 
-        val hiEntrada = entradaHit && nextAction == actions.clockInAction
+        val isOffJourney = s.isFinished || s.currentState == AttendanceState.NOT_STARTED
+        val hiEntrada = (entradaHit && nextAction == actions.clockInAction) || isOffJourney
         val hiBreak = coffeeHit && nextAction == actions.breakAction
         val hiMeal = mealHit && nextAction == actions.mealAction
         val hiSalida = salidaHit && nextAction == actions.clockOutAction
@@ -551,12 +552,20 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = "Entrada",
                         caption = "Entrada",
-                        enabled = entradaHit && !s.isFinished && !actionInProgress,
+                        enabled = (entradaHit || isOffJourney) && !actionInProgress,
                         highlighted = hiEntrada,
                         iconOn = R.drawable.ic_widget_entrada,
                         iconOff = R.drawable.ic_widget_entrada_dim,
                         onClick = {
-                            scope.launch { runAttendanceAction(actions.clockInAction) }
+                            scope.launch {
+                                if (s.isFinished) {
+                                    startNewWorkday()
+                                } else {
+                                    val actionToRun = actions.clockInAction
+                                        ?: if (s.currentState == AttendanceState.NOT_STARTED) AttendanceAction.CLOCK_IN else null
+                                    runAttendanceAction(actionToRun)
+                                }
+                            }
                         }
                     )
                     ActionCircleDrawable(
@@ -760,9 +769,10 @@ private fun ActionCircleDrawable(
     val size = 52.dp
     val iconSize = 26.dp
 
+    // Fondo azul sólido (SygnaBlue) cuando está resaltado para diferenciarlo claramente
     val bg = when {
         !enabled -> Gray100
-        highlighted -> White
+        highlighted -> SygnaBlue
         else -> SygnaBlueLight
     }
     val borderW = when {
@@ -795,7 +805,8 @@ private fun ActionCircleDrawable(
                     painter = painterResource(id = iconRes),
                     contentDescription = title,
                     modifier = Modifier.size(iconSize),
-                    tint = Color.Unspecified
+                    // Icono blanco cuando el fondo es azul para mejor contraste
+                    tint = if (highlighted && enabled) White else Color.Unspecified
                 )
             }
         }
