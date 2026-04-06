@@ -91,7 +91,7 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var state by remember { mutableStateOf<ClockingState?>(null) }
+    val dashboardState = remember { mutableStateOf<ClockingState?>(null) }
     var userName by remember { mutableStateOf("") }
     var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -120,7 +120,7 @@ fun DashboardScreen(
             }
         }
 
-    suspend fun refreshWidget() {
+    fun refreshWidget() {
         FichajeWidgetUpdater.updateAll(context.applicationContext)
     }
 
@@ -148,7 +148,7 @@ fun DashboardScreen(
         try {
             val result = executeWithSessionRecovery { repository.doAction(action) }
             result.getOrNull()?.let {
-                state = it
+                dashboardState.value = it
                 refreshWidget()
             }
             result.exceptionOrNull()?.let { error = it.toUserMessage() }
@@ -166,10 +166,10 @@ fun DashboardScreen(
                 resetResult.exceptionOrNull()?.let { error = it.toUserMessage() }
                 return
             }
-            state = resetResult.getOrNull()
+            dashboardState.value = resetResult.getOrNull()
             val clockInResult = executeWithSessionRecovery { repository.doAction(AttendanceAction.CLOCK_IN) }
             clockInResult.getOrNull()?.let {
-                state = it
+                dashboardState.value = it
                 refreshWidget()
             }
             clockInResult.exceptionOrNull()?.let { error = it.toUserMessage() }
@@ -183,7 +183,7 @@ fun DashboardScreen(
         error = null
         val today = executeWithSessionRecovery { repository.today() }
         today.onSuccess {
-            state = it
+            dashboardState.value = it
             loading = false
             refreshWidget()
         }
@@ -213,7 +213,7 @@ fun DashboardScreen(
         reload()
     }
 
-    val s = state
+    val s = dashboardState.value
     LaunchedEffect(s?.isFinished, s?.currentState) {
         tick = 0
         while (s != null && !s.isFinished && s.currentState != AttendanceState.NOT_STARTED) {
@@ -555,7 +555,6 @@ fun DashboardScreen(
                         highlighted = hiEntrada,
                         iconOn = R.drawable.ic_widget_entrada,
                         iconOff = R.drawable.ic_widget_entrada_dim,
-                        compact = true,
                         onClick = {
                             scope.launch { runAttendanceAction(actions.clockInAction) }
                         }
@@ -567,7 +566,6 @@ fun DashboardScreen(
                         highlighted = hiBreak,
                         iconOn = R.drawable.ic_widget_descanso,
                         iconOff = R.drawable.ic_widget_descanso_dim,
-                        compact = true,
                         onClick = {
                             scope.launch { runAttendanceAction(actions.breakAction) }
                         }
@@ -579,7 +577,6 @@ fun DashboardScreen(
                         highlighted = hiMeal,
                         iconOn = R.drawable.ic_widget_comida,
                         iconOff = R.drawable.ic_widget_comida_dim,
-                        compact = true,
                         onClick = {
                             scope.launch { runAttendanceAction(actions.mealAction) }
                         }
@@ -591,7 +588,6 @@ fun DashboardScreen(
                         highlighted = hiSalida,
                         iconOn = R.drawable.ic_widget_salida,
                         iconOff = R.drawable.ic_widget_salida_dim,
-                        compact = true,
                         onClick = {
                             scope.launch { runAttendanceAction(actions.clockOutAction) }
                         }
@@ -652,7 +648,7 @@ fun DashboardScreen(
                                     repository.setMode(ClockingMode.WITH_MEAL)
                                 }
                             result.getOrNull()?.let {
-                                state = it
+                                dashboardState.value = it
                                 refreshWidget()
                             }
                             result.exceptionOrNull()?.let { error = it.toUserMessage() }
@@ -677,7 +673,7 @@ fun DashboardScreen(
                                     repository.setMode(ClockingMode.TWO_BREAKS)
                                 }
                             result.getOrNull()?.let {
-                                state = it
+                                dashboardState.value = it
                                 refreshWidget()
                             }
                             result.exceptionOrNull()?.let { error = it.toUserMessage() }
@@ -759,11 +755,10 @@ private fun ActionCircleDrawable(
     highlighted: Boolean,
     iconOn: Int,
     iconOff: Int,
-    compact: Boolean = false,
     onClick: () -> Unit
 ) {
-    val size = if (compact) 52.dp else 68.dp
-    val iconSize = if (compact) 26.dp else 34.dp
+    val size = 52.dp
+    val iconSize = 26.dp
 
     val bg = when {
         !enabled -> Gray100
@@ -784,7 +779,7 @@ private fun ActionCircleDrawable(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Surface(
             onClick = onClick,
@@ -804,30 +799,19 @@ private fun ActionCircleDrawable(
                 )
             }
         }
-        when {
-            compact && caption != null -> {
-                val fg = when {
-                    !enabled -> Gray500
-                    highlighted -> SygnaBlue
-                    else -> Gray500
-                }
-                Text(
-                    caption,
-                    fontSize = 9.sp,
-                    color = fg,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1
-                )
-            }
-            !compact -> {
-                val fg = when {
-                    !enabled -> Gray500
-                    highlighted -> SygnaBlue
-                    else -> SygnaBlue.copy(alpha = 0.85f)
-                }
-                Text(title, fontSize = 11.sp, color = fg, textAlign = TextAlign.Center, maxLines = 2)
-            }
+        val label = caption ?: title
+        val fg = when {
+            !enabled -> Gray500
+            highlighted -> SygnaBlue
+            else -> Gray500
         }
+        Text(
+            text = label,
+            fontSize = 9.sp,
+            color = fg,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }
 
