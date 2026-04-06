@@ -6,28 +6,9 @@
     android:viewportHeight="24">
     <path
         android:fillColor="#00000000"
-        android:pathData="M4.5,7L19.5,7L19.5,17L4.5,17Z"
+        android:pathData="M17,9V7a2,2 0 0,0 -2,-2H5a2,2 0 0,0 -2,2v6a2,2 0 0,0 2,2h2m2,4h10a2,2 0 0,0 2,-2v-6a2,2 0 0,0 -2,-2H9a2,2 0 0,0 -2,2v6a2,2 0 0,0 2,2zm7,-5a2,2 0 1,1 -4,0 2,2 0 0,1 4,0z"
         android:strokeColor="@color/sygna_blue"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:strokeWidth="1.8" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M4.5,10.5L19.5,10.5"
-        android:strokeColor="@color/sygna_blue"
-        android:strokeLineCap="round"
-        android:strokeWidth="1.8" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M8,14L11,14"
-        android:strokeColor="@color/sygna_blue"
-        android:strokeLineCap="round"
-        android:strokeWidth="1.8" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M15,12.5m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0"
-        android:strokeColor="@color/sygna_blue"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:strokeWidth="1.8" />
+        android:strokeWidth="2" />
 </vector>

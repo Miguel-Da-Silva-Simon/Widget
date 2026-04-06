@@ -19,10 +19,10 @@
     <string name="quick_action_title_add_expense">Anadir gasto</string>
     <string name="quick_action_title_add_product">Anadir producto</string>
     <string name="quick_action_title_new_customer">Nuevo cliente</string>
-    <string name="quick_action_subtitle_new_invoice">Crear venta</string>
-    <string name="quick_action_subtitle_add_expense">Registrar compra</string>
-    <string name="quick_action_subtitle_add_product">Nuevo articulo</string>
-    <string name="quick_action_subtitle_new_customer">Anadir contacto</string>
+    <string name="quick_action_subtitle_new_invoice">Crear factura</string>
+    <string name="quick_action_subtitle_add_expense">Añadir gasto</string>
+    <string name="quick_action_subtitle_add_product">Nuevo producto</string>
+    <string name="quick_action_subtitle_new_customer">Nuevo cliente</string>
     <string name="quick_action_cd_new_invoice">Nueva factura</string>
     <string name="quick_action_cd_add_expense">Anadir gasto</string>
     <string name="quick_action_cd_add_product">Anadir producto</string>
@@ -30,4 +30,5 @@
     <string name="quick_action_cd_back">Volver al panel</string>
     <string name="quick_action_back_to_dashboard">Volver al panel</string>
     <string name="quick_action_screen_hint">Acceso rapido listo dentro de la app.</string>
+    <string name="quick_action_label_product_subtitle">Nuevo producto</string>
 </resources>

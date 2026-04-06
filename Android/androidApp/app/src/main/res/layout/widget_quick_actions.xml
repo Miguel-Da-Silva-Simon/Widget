@@ -19,7 +19,7 @@
         <FrameLayout
             android:id="@+id/quick_action_tile_invoice"
             android:layout_width="0dp"
-            android:layout_height="58dp"
+            android:layout_height="82dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -33,20 +33,21 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="4dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_invoice"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_invoice" />
 
                 <TextView
                     android:id="@+id/quick_action_label_invoice"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
@@ -54,13 +55,25 @@
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/quick_action_subtitle_invoice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/quick_action_subtitle_new_invoice"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp" />
             </LinearLayout>
         </FrameLayout>
 
         <FrameLayout
             android:id="@+id/quick_action_tile_expense"
             android:layout_width="0dp"
-            android:layout_height="58dp"
+            android:layout_height="82dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -74,20 +87,21 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="4dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_expense"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_expense" />
 
                 <TextView
                     android:id="@+id/quick_action_label_expense"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
@@ -95,6 +109,18 @@
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/quick_action_subtitle_expense"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/quick_action_subtitle_add_expense"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp" />
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
@@ -109,7 +135,7 @@
         <FrameLayout
             android:id="@+id/quick_action_tile_product"
             android:layout_width="0dp"
-            android:layout_height="58dp"
+            android:layout_height="82dp"
             android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -123,20 +149,21 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="4dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_product"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_product" />
 
                 <TextView
                     android:id="@+id/quick_action_label_product"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
@@ -144,13 +171,25 @@
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/quick_action_subtitle_product"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/quick_action_label_product_subtitle"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp" />
             </LinearLayout>
         </FrameLayout>
 
         <FrameLayout
             android:id="@+id/quick_action_tile_customer"
             android:layout_width="0dp"
-            android:layout_height="58dp"
+            android:layout_height="82dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:clickable="true"
@@ -164,20 +203,21 @@
                 android:gravity="center"
                 android:importantForAccessibility="no"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="4dp">
 
                 <ImageView
                     android:id="@+id/quick_action_icon_customer"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_quick_action_customer" />
 
                 <TextView
                     android:id="@+id/quick_action_label_customer"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
                     android:importantForAccessibility="no"
                     android:includeFontPadding="false"
                     android:maxLines="1"
@@ -185,6 +225,18 @@
                     android:textColor="@color/text_primary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/quick_action_subtitle_customer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/quick_action_subtitle_new_customer"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp" />
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>

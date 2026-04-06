@@ -18,15 +18,13 @@ internal object QuickActionsWidgetBinder {
     private const val PI_ADD_EXPENSE = 402
     private const val PI_ADD_PRODUCT = 403
     private const val PI_NEW_CUSTOMER = 404
-    private const val MIN_LABEL_WIDTH_DP = 150
-    private const val MIN_LABEL_HEIGHT_DP = 112
 
     fun build(context: Context, appWidgetOptions: Bundle? = null): RemoteViews {
         val app = context.applicationContext
         val views = RemoteViews(app.packageName, R.layout.widget_quick_actions)
-        val showLabels = shouldShowLabels(appWidgetOptions)
-
-        setLabelVisibility(views, showLabels)
+        
+        // Forzamos la visibilidad de las etiquetas para que no desaparezcan segun el tamaño
+        setLabelVisibility(views, true)
         bindClicks(app, views)
         return views
     }
@@ -40,16 +38,6 @@ internal object QuickActionsWidgetBinder {
         views.setViewVisibility(R.id.quick_action_label_expense, visibility)
         views.setViewVisibility(R.id.quick_action_label_product, visibility)
         views.setViewVisibility(R.id.quick_action_label_customer, visibility)
-    }
-
-    private fun shouldShowLabels(options: Bundle?): Boolean {
-        if (options == null) return true
-
-        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
-        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        if (minWidth == 0 || minHeight == 0) return true
-
-        return minWidth >= MIN_LABEL_WIDTH_DP && minHeight >= MIN_LABEL_HEIGHT_DP
     }
 
     private fun bindClicks(
