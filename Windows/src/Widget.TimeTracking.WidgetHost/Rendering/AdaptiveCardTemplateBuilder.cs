@@ -567,15 +567,33 @@ internal static class AdaptiveCardTemplateBuilder
               ]
             },
             {
-              "type": "TextBlock",
-              "$when": "${isSignedIn && $host.widgetSize == \"large\"}",
-              "text": "${timelineText}",
-              "color": "dark",
-              "weight": "lighter",
-              "wrap": true,
+              "type": "Container",
+              "$when": "${$host.widgetSize == \"large\" && timelineText != \"\"}",
               "spacing": "medium",
-              "maxLines": 2,
-              "size": "small"
+              "style": "emphasis",
+              "padding": "default",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Acciones registradas",
+                  "size": "small",
+                  "weight": "bolder",
+                  "color": "dark",
+                  "wrap": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${timelineText}",
+                  "color": "dark",
+                  "weight": "lighter",
+                  "wrap": true,
+                  "spacing": "small",
+                  "maxLines": 6,
+                  "size": "small",
+                  "fontType": "monospace",
+                  "isSubtle": true
+                }
+              ]
             }
           ]
         }
@@ -639,6 +657,42 @@ internal static class AdaptiveCardTemplateBuilder
         return Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps
             ? value
             : string.Empty;
+    }
+
+    private static string FormatTimelineText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var items = value.Split(
+            new[] { " · ", " Â· " },
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (items.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (items.Length == 1)
+        {
+            return items[0];
+        }
+
+        var formatted = new StringBuilder(value.Length + (items.Length * 2));
+        for (var index = 0; index < items.Length; index++)
+        {
+            if (index > 0)
+            {
+                formatted.Append(Environment.NewLine);
+            }
+
+            formatted.Append("• ");
+            formatted.Append(items[index]);
+        }
+
+        return formatted.ToString();
     }
 
     private static string BuildTimerChipSvg(string sessionCounter, bool isActive)
@@ -838,7 +892,7 @@ internal static class AdaptiveCardTemplateBuilder
                 signedIn.WorkedThisMonthDuration,
                 signedIn.CoffeeTodayDuration,
                 signedIn.FoodTodayDuration,
-                signedIn.TimelineText,
+                TimelineText = FormatTimelineText(signedIn.TimelineText),
                 TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter, isActiveSession),
                 CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
                     ? "end-coffee-break" : "start-coffee-break",
