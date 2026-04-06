@@ -19,6 +19,7 @@ object PrefKeys {
     val EXPIRES_AT = stringPreferencesKey("expires_at")
     val USER_NAME = stringPreferencesKey("user_name")
     val USER_EMAIL = stringPreferencesKey("user_email")
+    val PROFILE_PHOTO_URI = stringPreferencesKey("profile_photo_uri")
     val ENTRY_START_MS = longPreferencesKey("entry_start_ms")
     val BREAK_START_MS = longPreferencesKey("break_start_ms")
     val MEAL_START_MS = longPreferencesKey("meal_start_ms")
@@ -50,6 +51,7 @@ class SessionRepository(private val context: Context) {
             prefs.remove(PrefKeys.EXPIRES_AT)
             prefs.remove(PrefKeys.USER_NAME)
             prefs.remove(PrefKeys.USER_EMAIL)
+            prefs.remove(PrefKeys.PROFILE_PHOTO_URI)
             prefs.remove(PrefKeys.ENTRY_START_MS)
             prefs.remove(PrefKeys.BREAK_START_MS)
             prefs.remove(PrefKeys.MEAL_START_MS)
@@ -63,6 +65,17 @@ class SessionRepository(private val context: Context) {
 
     suspend fun saveUserName(name: String) {
         store.edit { it[PrefKeys.USER_NAME] = name }
+    }
+
+    suspend fun readProfilePhotoUri(): String? =
+        store.data.map { it[PrefKeys.PROFILE_PHOTO_URI] }.first()
+
+    suspend fun saveProfilePhotoUri(uri: String) {
+        store.edit { it[PrefKeys.PROFILE_PHOTO_URI] = uri }
+    }
+
+    suspend fun clearProfilePhotoUri() {
+        store.edit { it.remove(PrefKeys.PROFILE_PHOTO_URI) }
     }
 
     suspend fun readEntryStartMs(): Long = store.data.map { it[PrefKeys.ENTRY_START_MS] ?: -1L }.first()

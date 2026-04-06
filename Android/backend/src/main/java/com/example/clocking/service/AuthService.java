@@ -57,16 +57,17 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
         var payload = payloadOpt.get();
-        var sessionOpt = sessionService.validate(payload.sessionId(), payload.userId(), rawToken);
+        var sessionOpt = sessionService.validateForRefresh(payload.sessionId(), payload.userId());
         if (sessionOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
         var session = sessionOpt.get();
         var user = session.getUser();
         Instant newExpiresAt = clock.instant().plusMillis(jwtService.getExpirationMs());
-        sessionService.setSessionExpiresAt(session, newExpiresAt);
+        session.setExpiresAt(newExpiresAt);
+        session.setLastSeenAt(clock.instant());
         String newToken = jwtService.generateToken(user, session.getId(), newExpiresAt);
-        sessionService.attachToken(session.getId(), newToken);
+        session.setTokenHash(SessionService.hashToken(newToken));
         return new LoginResponse(newToken, session.getId(), newExpiresAt.toString(), new UserDto(user.getId(), user.getName(), user.getEmail()));
     }
 

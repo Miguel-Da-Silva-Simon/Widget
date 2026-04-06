@@ -1,6 +1,11 @@
 package com.example.widget_android.ui
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -57,6 +65,8 @@ import com.example.widget_android.data.canChangeMode
 import com.example.widget_android.data.ClockingApiRepository
 import com.example.widget_android.data.ClockingMode
 import com.example.widget_android.data.ClockingState
+import com.example.widget_android.data.ProfilePhotoStorage
+import com.example.widget_android.data.TokenHolder
 import com.example.widget_android.data.resolveActionBindings
 import com.example.widget_android.network.toUserMessage
 import com.example.widget_android.theme.Gray100
@@ -67,11 +77,12 @@ import com.example.widget_android.theme.SygnaBlueLight
 import com.example.widget_android.theme.White
 import com.example.widget_android.theme.WorkGreen
 import com.example.widget_android.widget.FichajeWidgetUpdater
-import java.net.ConnectException
-import java.net.SocketTimeoutException
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 @Composable
 fun DashboardScreen(
@@ -82,55 +93,115 @@ fun DashboardScreen(
     val context = LocalContext.current
     var state by remember { mutableStateOf<ClockingState?>(null) }
     var userName by remember { mutableStateOf("") }
+    var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var tick by remember { mutableIntStateOf(0) }
+    var actionInProgress by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
+    var photoBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(profilePhotoUri) {
+        photoBitmap = ProfilePhotoStorage.decodeBitmap(profilePhotoUri)
+    }
+    val photoPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri == null) return@rememberLauncherForActivityResult
+            scope.launch {
+                val storedPhoto = ProfilePhotoStorage.importToAppStorage(context, uri)
+                if (storedPhoto == null) {
+                    error = "No se pudo cargar la foto seleccionada"
+                    return@launch
+                }
+                repository.saveProfilePhotoUri(storedPhoto)
+                profilePhotoUri = storedPhoto
+                photoBitmap = ProfilePhotoStorage.decodeBitmap(storedPhoto)
+                FichajeWidgetUpdater.updateAll(context.applicationContext)
+            }
+        }
 
     suspend fun refreshWidget() {
         FichajeWidgetUpdater.updateAll(context.applicationContext)
     }
 
+    fun Throwable?.isUnauthorized(): Boolean =
+        this is HttpException && code() == 401
+
+    suspend fun <T> executeWithSessionRecovery(
+        operation: suspend () -> Result<T>
+    ): Result<T> {
+        val initial = operation()
+        if (!initial.exceptionOrNull().isUnauthorized()) {
+            return initial
+        }
+        val freshToken = withContext(Dispatchers.IO) { repository.readToken() }
+        if (!freshToken.isNullOrBlank()) {
+            TokenHolder.token = freshToken
+        }
+        return operation()
+    }
+
     suspend fun runAttendanceAction(action: AttendanceAction?) {
         if (action == null) return
-        repository.doAction(action).fold(
-            onSuccess = {
+        if (actionInProgress) return
+        actionInProgress = true
+        try {
+            val result = executeWithSessionRecovery { repository.doAction(action) }
+            result.getOrNull()?.let {
                 state = it
                 refreshWidget()
-            },
-            onFailure = { error = it.toUserMessage() }
-        )
+            }
+            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+        } finally {
+            actionInProgress = false
+        }
+    }
+
+    suspend fun startNewWorkday() {
+        if (actionInProgress) return
+        actionInProgress = true
+        try {
+            val resetResult = executeWithSessionRecovery { repository.reset() }
+            if (resetResult.isFailure) {
+                resetResult.exceptionOrNull()?.let { error = it.toUserMessage() }
+                return
+            }
+            state = resetResult.getOrNull()
+            val clockInResult = executeWithSessionRecovery { repository.doAction(AttendanceAction.CLOCK_IN) }
+            clockInResult.getOrNull()?.let {
+                state = it
+                refreshWidget()
+            }
+            clockInResult.exceptionOrNull()?.let { error = it.toUserMessage() }
+        } finally {
+            actionInProgress = false
+        }
     }
 
     suspend fun reload() {
         loading = true
         error = null
-        var today = repository.today()
-        if (today.isFailure) {
-            val e = today.exceptionOrNull()
-            if (e is SocketTimeoutException || e is ConnectException) {
-                delay(500)
-                today = repository.today()
-            }
+        val today = executeWithSessionRecovery { repository.today() }
+        today.onSuccess {
+            state = it
+            loading = false
+            refreshWidget()
         }
-        today.fold(
-            onSuccess = {
-                state = it
-                loading = false
-            },
-            onFailure = { e ->
-                loading = false
-                error = e.toUserMessage()
-            }
-        )
+        today.exceptionOrNull()?.let { e ->
+            loading = false
+            error = e.toUserMessage()
+        }
         if (today.isFailure) {
             if (userName.isBlank()) {
                 repository.readUserName()?.let { userName = it }
             }
             return
         }
-        repository.refreshMe().onSuccess { userName = it }
+        val me = executeWithSessionRecovery { repository.refreshMe() }
+        me.getOrNull()?.let { userName = it }
+        me.exceptionOrNull()?.let { e ->
+            if (!e.isUnauthorized()) error = e.toUserMessage()
+        }
         if (userName.isBlank()) {
             repository.readUserName()?.let { userName = it }
         }
@@ -138,6 +209,7 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         userName = repository.readUserName().orEmpty()
+        profilePhotoUri = repository.readProfilePhotoUri()
         reload()
     }
 
@@ -166,23 +238,6 @@ fun DashboardScreen(
             .verticalScroll(scroll)
             .padding(horizontal = 22.dp, vertical = 18.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            TextButton(
-                onClick = {
-                    scope.launch {
-                        repository.logout()
-                        refreshWidget()
-                        onLoggedOut()
-                    }
-                }
-            ) {
-                Text("Cerrar sesión", color = SygnaBlue, fontWeight = FontWeight.Medium)
-            }
-        }
-
         when {
             loading && s == null -> {
                 Box(Modifier.fillMaxWidth().height(320.dp), contentAlignment = Alignment.Center) {
@@ -210,19 +265,136 @@ fun DashboardScreen(
 
         if (s == null) return@Column
 
-        Text(
-            text = "Hola,",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Gray500
-        )
-        Text(
-            text = "${userName.ifBlank { "Usuario" }}!",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = SygnaBlue,
-                fontSize = 28.sp
-            )
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.widget_brand_icon),
+                            contentDescription = "Sygna",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Text(
+                            text = "Sygna",
+                            color = SygnaBlue,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Surface(
+                        onClick = {
+                            scope.launch {
+                                repository.logout()
+                                refreshWidget()
+                                onLoggedOut()
+                            }
+                        },
+                        modifier = Modifier.size(34.dp),
+                        shape = CircleShape,
+                        border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
+                        color = White,
+                        tonalElevation = 0.dp,
+                        shadowElevation = 0.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Cerrar sesión",
+                                modifier = Modifier.size(18.dp),
+                                tint = SygnaBlue
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                ProfilePhotoAvatar(
+                    bitmap = photoBitmap,
+                    userName = userName,
+                    modifier = Modifier.size(72.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            photoPicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.height(34.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        border = BorderStroke(1.dp, SygnaBlue.copy(alpha = 0.35f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = White,
+                            contentColor = SygnaBlue
+                        )
+                    ) {
+                        Text(
+                            if (profilePhotoUri.isNullOrBlank()) "Añadir foto" else "Cambiar foto",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    }
+                    if (!profilePhotoUri.isNullOrBlank()) {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    ProfilePhotoStorage.deletePhoto(context)
+                                    repository.clearProfilePhotoUri()
+                                    profilePhotoUri = null
+                                    photoBitmap = null
+                                    FichajeWidgetUpdater.updateAll(context.applicationContext)
+                                }
+                            },
+                            modifier = Modifier.height(34.dp),
+                            shape = RoundedCornerShape(999.dp),
+                            border = BorderStroke(1.dp, Color(0xFFE57373)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = White,
+                                contentColor = Color(0xFFE57373)
+                            )
+                        ) {
+                            Text("Quitar foto", fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Bienvenido, ${userName.ifBlank { "Usuario" }}",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = SygnaBlue,
+                        fontSize = 18.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(22.dp))
 
@@ -270,6 +442,7 @@ fun DashboardScreen(
         val hiMeal = mealHit && nextAction == actions.mealAction
         val hiSalida = salidaHit && nextAction == actions.clockOutAction
         val canChangeMode = s.canChangeMode()
+        val workedSummary = "Has trabajado ${formatElapsed(totalSeconds)}"
 
         Column(modifier = Modifier.fillMaxWidth()) {
             val timerShape = RoundedCornerShape(10.dp)
@@ -352,6 +525,15 @@ fun DashboardScreen(
                             )
                         }
                     }
+                    if (s.isFinished) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = workedSummary,
+                            fontSize = 11.sp,
+                            color = Gray500,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
 
@@ -369,7 +551,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = "Entrada",
                         caption = "Entrada",
-                        enabled = entradaHit && !s.isFinished,
+                        enabled = entradaHit && !s.isFinished && !actionInProgress,
                         highlighted = hiEntrada,
                         iconOn = R.drawable.ic_widget_entrada,
                         iconOff = R.drawable.ic_widget_entrada_dim,
@@ -381,7 +563,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = if (actions.breakAction == AttendanceAction.BREAK_END) "Fin desc." else "Descanso",
                         caption = "Desc.",
-                        enabled = coffeeHit && !s.isFinished,
+                        enabled = coffeeHit && !s.isFinished && !actionInProgress,
                         highlighted = hiBreak,
                         iconOn = R.drawable.ic_widget_descanso,
                         iconOff = R.drawable.ic_widget_descanso_dim,
@@ -393,7 +575,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = if (actions.mealAction == AttendanceAction.MEAL_END) "Fin comida" else "Comida",
                         caption = "Comida",
-                        enabled = mealHit && !s.isFinished,
+                        enabled = mealHit && !s.isFinished && !actionInProgress,
                         highlighted = hiMeal,
                         iconOn = R.drawable.ic_widget_comida,
                         iconOff = R.drawable.ic_widget_comida_dim,
@@ -405,7 +587,7 @@ fun DashboardScreen(
                     ActionCircleDrawable(
                         title = "Salida",
                         caption = "Salida",
-                        enabled = salidaHit && !s.isFinished,
+                        enabled = salidaHit && !s.isFinished && !actionInProgress,
                         highlighted = hiSalida,
                         iconOn = R.drawable.ic_widget_salida,
                         iconOff = R.drawable.ic_widget_salida_dim,
@@ -435,10 +617,14 @@ fun DashboardScreen(
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                Text("Siguiente", style = MaterialTheme.typography.labelMedium, color = Gray500)
+                Text(
+                    if (s.isFinished) "Tiempo trabajado" else "Siguiente",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Gray500
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = s.nextStepLabel,
+                    text = if (s.isFinished) workedSummary else s.nextStepLabel,
                     style = MaterialTheme.typography.titleMedium,
                     color = SygnaBlue,
                     fontWeight = FontWeight.SemiBold
@@ -455,16 +641,24 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "Con comida",
                 selected = s.mode == ClockingMode.WITH_MEAL,
-                enabled = canChangeMode,
+                enabled = canChangeMode && !actionInProgress,
                 onClick = {
+                    if (actionInProgress) return@ModeOutlineChip
                     scope.launch {
-                        repository.setMode(ClockingMode.WITH_MEAL).fold(
-                            onSuccess = {
+                        actionInProgress = true
+                        try {
+                            val result =
+                                executeWithSessionRecovery {
+                                    repository.setMode(ClockingMode.WITH_MEAL)
+                                }
+                            result.getOrNull()?.let {
                                 state = it
                                 refreshWidget()
-                            },
-                            onFailure = { error = it.toUserMessage() }
-                        )
+                            }
+                            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+                        } finally {
+                            actionInProgress = false
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -472,16 +666,24 @@ fun DashboardScreen(
             ModeOutlineChip(
                 label = "2 descansos",
                 selected = s.mode == ClockingMode.TWO_BREAKS,
-                enabled = canChangeMode,
+                enabled = canChangeMode && !actionInProgress,
                 onClick = {
+                    if (actionInProgress) return@ModeOutlineChip
                     scope.launch {
-                        repository.setMode(ClockingMode.TWO_BREAKS).fold(
-                            onSuccess = {
+                        actionInProgress = true
+                        try {
+                            val result =
+                                executeWithSessionRecovery {
+                                    repository.setMode(ClockingMode.TWO_BREAKS)
+                                }
+                            result.getOrNull()?.let {
                                 state = it
                                 refreshWidget()
-                            },
-                            onFailure = { error = it.toUserMessage() }
-                        )
+                            }
+                            result.exceptionOrNull()?.let { error = it.toUserMessage() }
+                        } finally {
+                            actionInProgress = false
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -492,19 +694,17 @@ fun DashboardScreen(
 
         OutlinedButton(
             onClick = {
+                if (actionInProgress) return@OutlinedButton
                 scope.launch {
-                    val action = nextAction ?: AttendanceAction.CLOCK_IN
-                    repository.doAction(action).fold(
-                        onSuccess = {
-                            state = it
-                            refreshWidget()
-                        },
-                        onFailure = { error = it.toUserMessage() }
-                    )
+                    if (s.isFinished) {
+                        startNewWorkday()
+                    } else {
+                        runAttendanceAction(nextAction ?: AttendanceAction.CLOCK_IN)
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !s.isFinished,
+            enabled = !actionInProgress && (s.isFinished || nextAction != null),
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(2.dp, SygnaBlue),
             colors = ButtonDefaults.outlinedButtonColors(
@@ -513,37 +713,8 @@ fun DashboardScreen(
             )
         ) {
             Text(
-                if (s.isFinished) "Jornada finalizada" else "Fichar siguiente",
+                if (s.isFinished) "Empezar nueva jornada" else "Fichar siguiente",
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(vertical = 6.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedButton(
-            onClick = {
-                scope.launch {
-                    repository.reset().fold(
-                        onSuccess = {
-                            state = it
-                            refreshWidget()
-                        },
-                        onFailure = { error = it.toUserMessage() }
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Gray500,
-                containerColor = White
-            ),
-            border = BorderStroke(1.dp, Gray300)
-        ) {
-            Text(
-                "Reiniciar",
-                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(vertical = 6.dp)
             )
         }
@@ -665,4 +836,53 @@ private fun formatElapsed(totalSeconds: Long): String {
     val m = (totalSeconds % 3600) / 60
     val sec = totalSeconds % 60
     return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, sec)
+}
+
+@Composable
+private fun ProfilePhotoAvatar(
+    bitmap: Bitmap?,
+    userName: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = SygnaBlueLight,
+        border = BorderStroke(2.dp, SygnaBlue.copy(alpha = 0.18f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Foto de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = profileInitials(userName),
+                    color = SygnaBlue,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
+            }
+        }
+    }
+}
+
+private fun profileInitials(userName: String): String {
+    val parts = userName
+        .trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+    return when {
+        parts.isEmpty() -> "U"
+        parts.size == 1 -> parts.first().take(1).uppercase(Locale.getDefault())
+        else -> (parts.first().take(1) + parts.last().take(1)).uppercase(Locale.getDefault())
+    }
 }

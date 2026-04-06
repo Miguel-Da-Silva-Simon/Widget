@@ -8,10 +8,10 @@ import com.example.widget_android.network.LoginRequestDto
 import com.example.widget_android.network.SetModeRequestDto
 import retrofit2.HttpException
 
-class ClockingApiRepository(context: Context) {
+class ClockingApiRepository(context: Context, widgetMode: Boolean = false) {
 
     private val app = context.applicationContext
-    private val api = ApiClient.service(app)
+    private val api = if (widgetMode) ApiClient.widgetService(app) else ApiClient.service(app)
     private val session = SessionRepository(app)
 
     suspend fun login(email: String, password: String): Result<String> =
@@ -37,13 +37,12 @@ class ClockingApiRepository(context: Context) {
             } else {
                 TokenHolder.token = token
                 val current = api.session()
-                // Solo cerrar si el servidor envía authenticated == false (no el falso por defecto de Gson).
                 if (current.authenticated == false) {
-                    session.clearSession()
                     Result.success(false)
                 } else {
+                    val activeToken = TokenHolder.token ?: token
                     session.saveSession(
-                        token = token,
+                        token = activeToken,
                         sessionId = current.sessionId,
                         expiresAt = current.expiresAt,
                         userName = current.user.name,
@@ -53,7 +52,6 @@ class ClockingApiRepository(context: Context) {
                 }
             }
         } catch (e: HttpException) {
-            if (e.code() == 401) session.clearSession()
             Result.failure(e)
         } catch (e: Throwable) {
             Result.failure(e)
@@ -126,7 +124,32 @@ class ClockingApiRepository(context: Context) {
         session.clearSession()
     }
 
+    suspend fun clearLocalSession() {
+        session.clearSession()
+    }
+
+    suspend fun reconcileSession(): Result<Boolean> {
+        val latestToken = session.readToken()
+        if (latestToken.isNullOrBlank()) {
+            return Result.success(false)
+        }
+        TokenHolder.token = latestToken
+        return restoreSession()
+    }
+
+    suspend fun readToken(): String? = session.readToken()
+
     suspend fun readUserName(): String? = session.readUserName()
+
+    suspend fun readProfilePhotoUri(): String? = session.readProfilePhotoUri()
+
+    suspend fun saveProfilePhotoUri(uri: String) {
+        session.saveProfilePhotoUri(uri)
+    }
+
+    suspend fun clearProfilePhotoUri() {
+        session.clearProfilePhotoUri()
+    }
 
     suspend fun readEntryStartMs(): Long = session.readEntryStartMs()
 

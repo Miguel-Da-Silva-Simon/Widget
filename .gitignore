@@ -1,6 +1,7 @@
 Android/.gradle-android/
 Android/.gradle-backend/
 Android/.gradle/
+Android/.gradle-user-home/
 Android/.kotlin/
 Android/.idea/
 Android/build/
@@ -10,6 +11,7 @@ Android/androidApp/.kotlin/
 Android/androidApp/.gradle/
 Android/androidApp/.gradle-user-home/
 Android/backend/.gradle/
+Android/backend/.gradle-home/
 .gradle/
 .DS_Store
 Thumbs.db

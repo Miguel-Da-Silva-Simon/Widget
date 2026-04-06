@@ -18,14 +18,14 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string EntryBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF' stroke='#5F96F9' stroke-width='1'/>"
         + "<g transform='translate(10,10) scale(1.6)'>"
-        + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='white' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
+        + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='#5F96F9' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
         + "</g></svg>");
 
     private static readonly string EntryDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(10,10) scale(1.6)'>"
         + "<path d='M11.0255 4.9058C13.6582 6.33196 13.6582 8.66804 11.0255 10.0942L8.90142 11.2429L6.77738 12.3916C4.15154 13.8177 2 12.6497 2 9.79736V7.5V5.20264C2 2.35031 4.15154 1.18227 6.78425 2.60844L8.33089 3.44736' stroke='white' stroke-width='1.5' stroke-miterlimit='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/>"
         + "</g></svg>");
@@ -39,7 +39,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string StopDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(8,8)'>"
         + "<rect x='4' y='4' width='20' height='20' rx='5' stroke='white' stroke-width='2.5' fill='none'/>"
         + "</g></svg>");
@@ -58,8 +58,8 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string CoffeeBreak = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#B8D0F0'/>"
-        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF' stroke='#5F96F9' stroke-width='1'/>"
+        + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='#5F96F9' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
         + "<path d='M5.94 1.968V1.408'/>"
@@ -70,7 +70,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string CoffeeDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(10,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
         + "<path d='M3.44 1.968V1.408'/>"
@@ -96,8 +96,8 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string FoodBreak = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#B8D0F0'/>"
-        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<rect width='44' height='44' rx='12' fill='#FFFFFF' stroke='#5F96F9' stroke-width='1'/>"
+        + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='#5F96F9' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
         + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
         + "<path d='M7.071 4.122L7.109 1.05'/>"
@@ -110,7 +110,7 @@ internal static class AdaptiveCardTemplateBuilder
 
     private static readonly string FoodDisabled = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
-        + "<rect width='44' height='44' rx='12' fill='#DDE3EC'/>"
+        + "<rect width='44' height='44' rx='12' fill='#5F96F9'/>"
         + "<g transform='translate(8,7) scale(1.85)' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'>"
         + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
         + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
@@ -121,6 +121,38 @@ internal static class AdaptiveCardTemplateBuilder
         + "<path d='M5.023 4.098L5.06 1.025'/>"
         + "<path d='M4.965 8.877L4.998 6.146'/>"
         + "</g></svg>");
+
+    private static readonly string LastShiftIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g fill='none' stroke='#5F96F9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<circle cx='10' cy='10' r='6.25'/>"
+        + "<path d='M10 7.25V10.25L12.25 11.5'/>"
+        + "</g></svg>");
+
+    private static readonly string CoffeeSummaryIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#5F96F9' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<path d='M1.25 8.468V6.548C1.25 5.088 2.43 3.918 3.88 3.918H8.49C9.95 3.918 11.12 5.098 11.12 6.548V11.128C11.12 12.588 9.94 13.758 8.49 13.758H3.88C2.43 13.758 1.25 12.578 1.25 11.128'/>"
+        + "<path d='M3.44 1.968V1.408'/>"
+        + "<path d='M5.94 1.968V1.408'/>"
+        + "<path d='M8.44 1.968V1.408'/>"
+        + "<path d='M13.75 8.228C13.75 9.678 12.57 10.858 11.12 10.858V5.598C12.57 5.598 13.75 6.778 13.75 8.228Z'/>"
+        + "<path d='M1.25 7.498H10.94'/>"
+        + "</g></svg>");
+
+    private static readonly string FoodSummaryIcon = SvgDataUri(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'>"
+        + "<g transform='translate(3,3)' fill='none' stroke='#5F96F9' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>"
+        + "<path d='M10.9615 14C10.3959 13.998 9.9389 13.538 9.941 12.972L9.956 8.875L12.005 8.882L11.99 12.98C11.988 13.545 11.527 14.002 10.9615 14Z'/>"
+        + "<path d='M12.034 1.029L12.005 8.882L8.932 8.871L8.95 4.091C8.956 2.394 10.337 1.023 12.034 1.029Z'/>"
+        + "<path d='M7.071 4.122L7.109 1.05'/>"
+        + "<path d='M4.903 13.999C4.337 13.992 3.884 13.528 3.891 12.962L3.941 8.865L5.989 8.89L5.939 12.987C5.932 13.553 5.468 14.006 4.903 13.999Z'/>"
+        + "<path d='M5.681 6.154L4.315 6.138C3.561 6.129 2.957 5.51 2.966 4.756L2.974 4.073L7.071 4.122L7.063 4.805C7.054 5.559 6.435 6.163 5.681 6.154Z'/>"
+        + "<path d='M2.974 4.073L3.011 1'/>"
+        + "<path d='M5.023 4.098L5.06 1.025'/>"
+        + "<path d='M4.965 8.877L4.998 6.146'/>"
+        + "</g></svg>");
+
     /// <summary>CTA sesión cerrada: mismo tamaño que el resto de botones (44×44, #5F96F9 + icono logout).</summary>
     private static readonly string OpenAppBlue = SvgDataUri(
         "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>"
@@ -282,23 +314,15 @@ internal static class AdaptiveCardTemplateBuilder
                           "items": [
                             {
                               "type": "Container",
-                              "$when": "${showEntryButton}",
-                              "selectAction": { "type": "Action.Execute", "title": "Empezar jornada", "verb": "clock-in" },
+                              "$when": "${showPrimaryActionInteractive}",
+                              "selectAction": { "type": "Action.Execute", "title": "${primaryActionTitle}", "verb": "${primaryActionVerb}" },
                               "items": [
-                                { "type": "Image", "url": "{{EntryBlue}}", "width": "44px" }
+                                { "type": "Image", "url": "${primaryActionButton}", "width": "44px" }
                               ]
                             },
                             {
                               "type": "Container",
-                              "$when": "${showClockOutButton}",
-                              "selectAction": { "type": "Action.Execute", "title": "Finalizar jornada", "verb": "clock-out" },
-                              "items": [
-                                { "type": "Image", "url": "{{StopBlue}}", "width": "44px" }
-                              ]
-                            },
-                            {
-                              "type": "Container",
-                              "$when": "${showClockOutDisabled}",
+                              "$when": "${showPrimaryActionDisabled}",
                               "items": [
                                 { "type": "Image", "url": "{{StopDisabled}}", "width": "44px" }
                               ]
@@ -370,59 +394,157 @@ internal static class AdaptiveCardTemplateBuilder
               ]
             },
             {
-              "type": "TextBlock",
+              "type": "Container",
               "$when": "${isSignedIn}",
-              "text": "${statusHeadline}",
-              "size": "large",
-              "weight": "bolder",
-              "color": "dark",
-              "wrap": true,
-              "spacing": "medium"
-            },
-            {
-              "type": "TextBlock",
-              "$when": "${isSignedIn}",
-              "text": "${statusDetail}",
-              "size": "small",
-              "color": "dark",
-              "weight": "lighter",
-              "wrap": true,
-              "spacing": "medium"
-            },
-            {
-              "type": "ColumnSet",
-              "$when": "${isSignedIn}",
+              "style": "default",
               "spacing": "medium",
-              "columns": [
+              "padding": "default",
+              "separator": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                { "type": "TextBlock", "text": "Última jornada", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${lastCompletedShiftDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
-                  ]
+                  "type": "Container",
+                  "spacing": "none",
+                  "minHeight": "4wpx"
                 },
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                    { "type": "TextBlock", "text": "Descanso", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${coffeeTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
-                  ]
+                  "type": "TextBlock",
+                  "text": "${statusHeadline}",
+                  "size": "large",
+                  "weight": "bolder",
+                  "color": "dark",
+                  "wrap": true,
+                  "spacing": "small",
+                  "horizontalAlignment": "center"
                 },
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "items": [
-                    { "type": "TextBlock", "text": "Comida", "size": "small", "color": "dark", "weight": "lighter", "spacing": "none", "wrap": true },
-                    { "type": "TextBlock", "text": "${foodTodayDuration}", "size": "medium", "color": "dark", "weight": "bolder", "spacing": "small", "wrap": true }
+                  "type": "Container",
+                  "spacing": "none",
+                  "minHeight": "8px"
+                },
+                {
+                  "type": "ColumnSet",
+                  "spacing": "large",
+                  "horizontalAlignment": "center",
+                  "columns": [
+                    {
+                      "type": "Column",
+                      "width": "auto",
+                      "horizontalAlignment": "center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "{{LastShiftIcon}}",
+                          "width": "30px",
+                          "height": "30px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Jornada",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
+                          "spacing": "none",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${lastCompletedShiftDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "20px",
+                      "items": []
+                    },
+                    {
+                      "type": "Column",
+                      "width": "auto",
+                      "horizontalAlignment": "center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "{{CoffeeSummaryIcon}}",
+                          "width": "30px",
+                          "height": "30px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Descanso",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
+                          "spacing": "none",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${coffeeTodayDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "20px",
+                      "items": []
+                    },
+                    {
+                      "type": "Column",
+                      "width": "auto",
+                      "horizontalAlignment": "center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "{{FoodSummaryIcon}}",
+                          "width": "30px",
+                          "height": "30px",
+                          "horizontalAlignment": "center"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Comida",
+                          "size": "small",
+                          "color": "dark",
+                          "weight": "lighter",
+                          "spacing": "none",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "${foodTodayDuration}",
+                          "size": "medium",
+                          "color": "dark",
+                          "weight": "bolder",
+                          "spacing": "small",
+                          "horizontalAlignment": "center",
+                          "wrap": true
+                        }
+                      ]
+                    }
                   ]
                 }
               ]
             },
             {
               "type": "Container",
-              "$when": "${isSignedIn}",
+              "$when": "${isSignedIn && $host.widgetSize == \"large\"}",
               "spacing": "large",
               "items": [
                 {
@@ -445,15 +567,33 @@ internal static class AdaptiveCardTemplateBuilder
               ]
             },
             {
-              "type": "TextBlock",
-              "$when": "${isSignedIn && $host.widgetSize == \"large\"}",
-              "text": "${timelineText}",
-              "color": "dark",
-              "weight": "lighter",
-              "wrap": true,
+              "type": "Container",
+              "$when": "${$host.widgetSize == \"large\" && timelineText != \"\"}",
               "spacing": "medium",
-              "maxLines": 2,
-              "size": "small"
+              "style": "emphasis",
+              "padding": "default",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Acciones registradas",
+                  "size": "small",
+                  "weight": "bolder",
+                  "color": "dark",
+                  "wrap": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${timelineText}",
+                  "color": "dark",
+                  "weight": "lighter",
+                  "wrap": true,
+                  "spacing": "small",
+                  "maxLines": 6,
+                  "size": "small",
+                  "fontType": "monospace",
+                  "isSubtle": true
+                }
+              ]
             }
           ]
         }
@@ -470,6 +610,9 @@ internal static class AdaptiveCardTemplateBuilder
             .Replace("{{EntryDisabled}}", EntryDisabled)
             .Replace("{{StopBlue}}", StopBlue)
             .Replace("{{StopDisabled}}", StopDisabled)
+            .Replace("{{LastShiftIcon}}", LastShiftIcon)
+            .Replace("{{CoffeeSummaryIcon}}", CoffeeSummaryIcon)
+            .Replace("{{FoodSummaryIcon}}", FoodSummaryIcon)
             .Replace("{{CoffeeBlue}}", CoffeeBlue)
             .Replace("{{CoffeeBreak}}", CoffeeBreak)
             .Replace("{{CoffeeDisabled}}", CoffeeDisabled)
@@ -485,8 +628,14 @@ internal static class AdaptiveCardTemplateBuilder
     {
         var svg = new StringBuilder(256);
         svg.Append("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800'>");
-        svg.Append("<rect width='400' height='800' fill='#F4F9FD'/>");
+        // Fondo general ligeramente azulado.
+        svg.Append("<rect width='400' height='800' fill='#E5F1FF'/>");
+        // Franja superior azul (barra de título).
         svg.Append("<rect x='4' y='4' width='392' height='55' rx='10' fill='#5F96F9'/>");
+        // Sombra suave detrás de la tarjeta principal.
+        svg.Append("<rect x='16' y='68' width='368' height='350' rx='18' fill='#B5CCF5' opacity='0.35'/>");
+        // Tarjeta principal blanca con borde sutil.
+        svg.Append("<rect x='10' y='202' width='380' height='450' rx='18' fill='#FFFFFF' stroke='#D5E5FA' stroke-width='1'/>");
         svg.Append("</svg>");
         return SvgDataUri(svg.ToString());
     }
@@ -510,10 +659,47 @@ internal static class AdaptiveCardTemplateBuilder
             : string.Empty;
     }
 
-    private static string BuildTimerChipSvg(string sessionCounter)
+    private static string FormatTimelineText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var items = value.Split(
+            new[] { " · ", " Â· " },
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (items.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (items.Length == 1)
+        {
+            return items[0];
+        }
+
+        var formatted = new StringBuilder(value.Length + (items.Length * 2));
+        for (var index = 0; index < items.Length; index++)
+        {
+            if (index > 0)
+            {
+                formatted.Append(Environment.NewLine);
+            }
+
+            formatted.Append("• ");
+            formatted.Append(items[index]);
+        }
+
+        return formatted.ToString();
+    }
+
+    private static string BuildTimerChipSvg(string sessionCounter, bool isActive)
     {
         var normalizedCounter = NormalizeTimerCounter(sessionCounter);
-        var glyphMarkup = BuildTimerGlyphMarkup(normalizedCounter);
+        var bulletColor = isActive ? "#10B981" : "#EF4444";
+        var glyphMarkup = BuildTimerGlyphMarkup(normalizedCounter, bulletColor);
         return SvgDataUri(
             "<svg xmlns='http://www.w3.org/2000/svg' width='110' height='44' viewBox='0 0 110 44'>"
             + "<rect x='0.5' y='0.5' width='109' height='43' rx='12' ry='12' fill='#FFFFFF' stroke='#D2ECFF' stroke-width='1'/>"
@@ -543,7 +729,7 @@ internal static class AdaptiveCardTemplateBuilder
             : "00:00:00";
     }
 
-    private static string BuildTimerGlyphMarkup(string timerText)
+    private static string BuildTimerGlyphMarkup(string timerText, string bulletColor)
     {
         const double bulletDiameter = 4;
         const double bulletGap = 9.1;
@@ -556,7 +742,7 @@ internal static class AdaptiveCardTemplateBuilder
         var groupStartX = (chipWidth - (bulletDiameter + bulletGap + timerWidth)) / 2;
         var cursor = groupStartX + bulletDiameter + bulletGap;
 
-        markup.Append($"<circle cx='{SvgValue(groupStartX + (bulletDiameter / 2))}' cy='22' r='1.9' fill='#111827' opacity='1'/>");
+        markup.Append($"<circle cx='{SvgValue(groupStartX + (bulletDiameter / 2))}' cy='22' r='1.9' fill='{bulletColor}' opacity='1'/>");
         markup.Append("<g fill='none' stroke='#111827' stroke-width='1.62' stroke-linecap='round' stroke-linejoin='round'>");
 
         foreach (var character in timerText)
@@ -650,12 +836,14 @@ internal static class AdaptiveCardTemplateBuilder
                     CoffeeTodayDuration = string.Empty,
                     FoodTodayDuration = string.Empty,
                     TimelineText = string.Empty,
-                    TimerChipSvg = BuildTimerChipSvg("00:00:00"),
+                    TimerChipSvg = BuildTimerChipSvg("00:00:00", false),
                     CoffeeVerb = "start-coffee-break",
                     FoodVerb = "start-food-break",
-                    ShowEntryButton = false,
-                    ShowClockOutButton = false,
-                    ShowClockOutDisabled = false,
+                    ShowPrimaryActionInteractive = false,
+                    ShowPrimaryActionDisabled = false,
+                    PrimaryActionButton = string.Empty,
+                    PrimaryActionTitle = string.Empty,
+                    PrimaryActionVerb = string.Empty,
                     ShowCoffeeActive = false,
                     ShowCoffeeEndBreak = false,
                     ShowCoffeeDisabled = false,
@@ -674,6 +862,11 @@ internal static class AdaptiveCardTemplateBuilder
     private static string BuildSignedInData(SignedInWidgetViewModel signedIn)
     {
         var safeProfilePhotoUrl = SanitizeProfilePhotoUrl(signedIn.ProfilePhotoUrl);
+
+        var isActiveSession =
+            signedIn.ActiveBreakType == BreakType.None
+            && !signedIn.CanClockIn
+            && signedIn.CanClockOut;
 
         return JsonSerializer.Serialize(
             new
@@ -699,15 +892,18 @@ internal static class AdaptiveCardTemplateBuilder
                 signedIn.WorkedThisMonthDuration,
                 signedIn.CoffeeTodayDuration,
                 signedIn.FoodTodayDuration,
-                signedIn.TimelineText,
-                TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter),
+                TimelineText = FormatTimelineText(signedIn.TimelineText),
+                TimerChipSvg = BuildTimerChipSvg(signedIn.SessionCounter, isActiveSession),
                 CoffeeVerb = signedIn.ActiveBreakType == BreakType.Coffee
                     ? "end-coffee-break" : "start-coffee-break",
                 FoodVerb = signedIn.ActiveBreakType == BreakType.Food
                     ? "end-food-break" : "start-food-break",
-                ShowEntryButton = signedIn.CanClockIn,
-                ShowClockOutButton = signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut,
-                ShowClockOutDisabled = signedIn.ActiveBreakType != BreakType.None,
+                ShowPrimaryActionInteractive = signedIn.CanClockIn
+                    || (signedIn.ActiveBreakType == BreakType.None && signedIn.CanClockOut),
+                ShowPrimaryActionDisabled = signedIn.ActiveBreakType != BreakType.None,
+                PrimaryActionButton = signedIn.CanClockIn ? EntryBlue : StopBlue,
+                PrimaryActionTitle = signedIn.CanClockIn ? "Empezar jornada" : "Finalizar jornada",
+                PrimaryActionVerb = signedIn.CanClockIn ? "clock-in" : "clock-out",
                 ShowCoffeeActive = signedIn.ActiveBreakType == BreakType.None && signedIn.CanStartCoffeeBreak,
                 ShowCoffeeEndBreak = signedIn.ActiveBreakType == BreakType.Coffee && signedIn.CanEndCoffeeBreak,
                 ShowCoffeeDisabled = signedIn.ActiveBreakType == BreakType.Food

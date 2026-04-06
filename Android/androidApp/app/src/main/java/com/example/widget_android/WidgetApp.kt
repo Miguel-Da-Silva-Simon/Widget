@@ -1,9 +1,12 @@
 package com.example.widget_android
 
 import android.app.Application
+import com.example.widget_android.data.SessionRepository
+import com.example.widget_android.data.TokenHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class WidgetApp : Application() {
 
@@ -12,7 +15,11 @@ class WidgetApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // No leer DataStore aquí para rellenar TokenHolder: la primera emisión puede ser
-        // anterior al login y sobrescribir el token que ya puso MainActivity / saveSession (401 en API).
+        applicationScope.launch(Dispatchers.IO) {
+            val stored = SessionRepository(this@WidgetApp).readToken()
+            if (!stored.isNullOrBlank()) {
+                TokenHolder.token = stored
+            }
+        }
     }
 }

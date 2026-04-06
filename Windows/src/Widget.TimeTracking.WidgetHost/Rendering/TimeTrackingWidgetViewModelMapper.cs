@@ -83,7 +83,7 @@ internal sealed class TimeTrackingWidgetViewModelMapper
         {
             TimeTrackingStatus.NotClockedIn => "Sin fichar",
             TimeTrackingStatus.Working => "Estás trabajando",
-            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso de café",
+            TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Coffee => "En descanso",
             TimeTrackingStatus.OnBreak when snapshot.ActiveBreakType == BreakType.Food => "En descanso de comida",
             TimeTrackingStatus.OnBreak => "En descanso",
             TimeTrackingStatus.OffDuty => "Jornada finalizada",
@@ -128,24 +128,58 @@ internal sealed class TimeTrackingWidgetViewModelMapper
 
     private static string BuildTimelineText(TimeTrackingSnapshot snapshot, CultureInfo culture)
     {
-        if (snapshot.WorkdayEvents.Count == 0)
+        var timelineEvents = ResolveTimelineEvents(snapshot);
+        if (timelineEvents.Count == 0)
         {
             return "Todavía no hay hitos registrados hoy.";
         }
 
         return string.Join(" · ",
-            snapshot.WorkdayEvents.Select(item =>
+            timelineEvents.Select(item =>
                 $"{item.OccurredAtUtc.ToLocalTime().ToString("HH:mm", culture)} {TranslateEvent(item)}"));
+    }
+
+    private static IReadOnlyList<WorkdayEvent> ResolveTimelineEvents(TimeTrackingSnapshot snapshot)
+    {
+        if (snapshot.WorkdayEvents.Count == 0)
+        {
+            return Array.Empty<WorkdayEvent>();
+        }
+
+        var orderedEvents = snapshot.WorkdayEvents
+            .Where(item => item.EventType is
+                WorkdayEventType.ClockIn
+                or WorkdayEventType.ClockOut
+                or WorkdayEventType.StartCoffeeBreak
+                or WorkdayEventType.EndCoffeeBreak
+                or WorkdayEventType.StartFoodBreak
+                or WorkdayEventType.EndFoodBreak)
+            .OrderBy(item => item.OccurredAtUtc)
+            .ToArray();
+
+        if (orderedEvents.Length == 0)
+        {
+            return Array.Empty<WorkdayEvent>();
+        }
+
+        var lastClockInIndex = Array.FindLastIndex(orderedEvents, item => item.EventType == WorkdayEventType.ClockIn);
+        var scopedEvents = lastClockInIndex >= 0
+            ? orderedEvents.Skip(lastClockInIndex)
+            : orderedEvents;
+
+        return scopedEvents
+            .TakeLast(10)
+            .ToArray();
     }
 
     private static string TranslateEvent(WorkdayEvent item) =>
         item.EventType switch
         {
             WorkdayEventType.ClockIn => "Entrada",
-            WorkdayEventType.StartCoffeeBreak => "Café",
-            WorkdayEventType.EndCoffeeBreak => "Reanudar",
-            WorkdayEventType.StartFoodBreak => "Comida",
-            WorkdayEventType.EndFoodBreak => "Reanudar",
+            WorkdayEventType.StartCoffeeBreak => "Inicio café",
+            WorkdayEventType.EndCoffeeBreak => "Fin café",
+            WorkdayEventType.StartFoodBreak => "Inicio comida",
+            WorkdayEventType.EndFoodBreak => "Fin comida",
             WorkdayEventType.ClockOut => "Salida",
             _ => item.EventType.ToString()
         };
