@@ -1,13 +1,20 @@
 import AppKit
 import Foundation
 
-final class MockUserSessionService: @unchecked Sendable {
+/// Sesión en JSON del App Group + JWT en llavero (compartible con la extensión si el access group coincide).
+final class KeychainBackedUserSessionService: @unchecked Sendable {
     private let store = JsonUserSessionStore()
 
     func getCurrentSession() throws -> UserSession {
         guard let document = try store.loadDocument() else {
             return .signedOut()
         }
+        guard document.state == .signedIn else {
+            return .signedOut()
+        }
+        // La UI (app y widget) solo mira el documento. Las llamadas a la API siguen exigiendo JWT en
+        // ClockingURLSessionClient / refreshAsync; no usar Bundle.main ni token aquí: en macOS el proceso
+        // del widget de escritorio a veces no coincide con `.appex` y el llavero del host no es visible.
         return toSession(document)
     }
 
@@ -41,27 +48,37 @@ final class MockUserSessionService: @unchecked Sendable {
         return NSImage(contentsOf: url)
     }
 
-    func signIn(displayName: String?) throws -> UserSession {
-        let rawName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let fallback = ProcessInfo.processInfo.userName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeName = (rawName?.isEmpty == false) ? rawName! : (fallback.isEmpty ? "local-user" : fallback)
-        let userId = safeName
-
+    func saveSignedInUserFromServer(user: ClockingUserDTO) throws {
         var document = UserSessionDocument(
             state: .signedIn,
-            userId: userId,
-            displayName: safeName,
-            email: nil,
+            userId: String(user.id),
+            displayName: user.name,
+            email: user.email,
             signedInAtUtc: Date(),
             profilePhotoFileName: nil
         )
         try carryOverProfilePhoto(into: &document)
         try store.saveDocument(document)
-        return toSession(document)
     }
 
-    func signOut() throws {
-        try deleteStoredProfilePhotoIfAny()
+    func updateUserFromSession(_ body: ClockingSessionResponseBody) throws {
+        let u = body.user
+        var document = UserSessionDocument(
+            state: .signedIn,
+            userId: String(u.id),
+            displayName: u.name,
+            email: u.email,
+            signedInAtUtc: Date(),
+            profilePhotoFileName: nil
+        )
+        if let previous = try store.loadDocument(), let photo = previous.profilePhotoFileName {
+            document.profilePhotoFileName = photo
+        }
+        try store.saveDocument(document)
+    }
+
+    func signOutClearingDocument() throws {
+        try deleteStoredProfileIfAny()
         let cleared = UserSessionDocument(
             state: .signedOut,
             userId: nil,
@@ -97,7 +114,7 @@ final class MockUserSessionService: @unchecked Sendable {
         }
     }
 
-    private func deleteStoredProfilePhotoIfAny() throws {
+    private func deleteStoredProfileIfAny() throws {
         guard let previous = try store.loadDocument(),
               let fileName = previous.profilePhotoFileName, !fileName.isEmpty
         else { return }

@@ -10,16 +10,28 @@ struct SignedInWidgetPresentation {
     let title: String
     let displayName: String
     let profileImage: NSImage?
+
     let statusHeadline: String
+    /// Version corta para small: "Trabajando" en vez de "Estás trabajando".
+    let shortStatusHeadline: String
     let sessionCounter: String
     let timerBulletActive: Bool
+    /// true cuando el usuario esta en cualquier tipo de descanso.
+    let isOnBreak: Bool
+
     let lastAction: String
     let lastActionTime: String
     let lastCompletedShiftDuration: String
     let coffeeTodayDuration: String
     let foodTodayDuration: String
+
     let timelineText: String
     let timelineFormatted: String
+    /// Items individuales del timeline para el large (max 4, sin scroll).
+    let timelineItems: [String]
+
+    /// "Vuelve a las HH:mm" durante descanso/comida; nil en otros estados.
+    let returnHint: String?
 
     let showPrimaryInteractive: Bool
     let showPrimaryDisabled: Bool
@@ -89,17 +101,21 @@ enum TimeTrackingWidgetViewModelMapper {
             displayName: "Bienvenido, \(welcomeName)",
             profileImage: profileImage,
             statusHeadline: buildStatusHeadline(snapshot: snapshot),
+            shortStatusHeadline: buildShortStatusHeadline(snapshot: snapshot),
             sessionCounter: sessionCounter,
             timerBulletActive: isActiveSession,
+            isOnBreak: activeBreakType != .none,
             lastAction: snapshot.lastAction == .none
                 ? "Sin acciones todavía"
                 : translateAction(snapshot.lastAction),
             lastActionTime: formatLastActionTime(snapshot.lastActionAtUtc, locale: culture),
-            lastCompletedShiftDuration: formatDuration(snapshot.summary.lastCompletedShiftWorkedDuration),
-            coffeeTodayDuration: formatBreakDuration(snapshot.summary.coffeeBreakDurationToday),
-            foodTodayDuration: formatBreakDuration(snapshot.summary.foodBreakDurationToday),
+            lastCompletedShiftDuration: formatDuration(liveJornadaSummarySeconds(snapshot: snapshot, now: now)),
+            coffeeTodayDuration: formatBreakDuration(liveBreakTypeTotalSeconds(snapshot: snapshot, type: .coffee, now: now)),
+            foodTodayDuration: formatBreakDuration(liveBreakTypeTotalSeconds(snapshot: snapshot, type: .food, now: now)),
             timelineText: timelineRaw,
             timelineFormatted: formatTimelineForDisplay(timelineRaw),
+            timelineItems: buildTimelineItems(snapshot: snapshot, locale: culture),
+            returnHint: buildReturnHint(snapshot: snapshot, now: now),
             showPrimaryInteractive: available.contains(.clockIn)
                 || (activeBreakType == .none && available.contains(.clockOut)),
             showPrimaryDisabled: activeBreakType != .none,
@@ -121,6 +137,8 @@ enum TimeTrackingWidgetViewModelMapper {
         return .signedIn(signedIn)
     }
 
+    // MARK: - Status headlines
+
     private static func buildStatusHeadline(snapshot: TimeTrackingSnapshot) -> String {
         switch snapshot.status {
         case .notClockedIn:
@@ -128,17 +146,47 @@ enum TimeTrackingWidgetViewModelMapper {
         case .working:
             return "Estás trabajando"
         case .onBreak:
-            if snapshot.activeBreakType == .coffee {
-                return "En descanso"
-            }
-            if snapshot.activeBreakType == .food {
-                return "En descanso de comida"
-            }
+            if snapshot.activeBreakType == .coffee { return "En descanso" }
+            if snapshot.activeBreakType == .food { return "En comida" }
             return "En descanso"
         case .offDuty:
             return "Jornada finalizada"
         }
     }
+
+    private static func buildShortStatusHeadline(snapshot: TimeTrackingSnapshot) -> String {
+        switch snapshot.status {
+        case .notClockedIn: return "Sin fichar"
+        case .working: return "Trabajando"
+        case .onBreak:
+            if snapshot.activeBreakType == .food { return "En comida" }
+            return "En descanso"
+        case .offDuty: return "Finalizada"
+        }
+    }
+
+    // MARK: - Return hint
+
+    private static func buildReturnHint(snapshot: TimeTrackingSnapshot, now: Date) -> String? {
+        guard let activeBreak = snapshot.activeBreak, activeBreak.isActive else { return nil }
+        let limit: TimeInterval
+        switch activeBreak.type {
+        case .coffee: limit = AttendanceDurations.breakDuration
+        case .food: limit = AttendanceDurations.mealDuration
+        case .none: return nil
+        }
+        let returnAt = activeBreak.startedAtUtc.addingTimeInterval(limit)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = .current
+        if returnAt > now {
+            return "Vuelve a las \(formatter.string(from: returnAt))"
+        } else {
+            return "Tiempo excedido"
+        }
+    }
+
+    // MARK: - Duration helpers
 
     private static func resolvePrimaryDuration(snapshot: TimeTrackingSnapshot) -> TimeInterval {
         switch snapshot.status {
@@ -149,7 +197,6 @@ enum TimeTrackingWidgetViewModelMapper {
         }
     }
 
-    /// Crono del chip: con `TimelineView` el `now` avanza, pero el `summary` solo se recalcula al persistir; aquí recalculamos jornada neta en vivo.
     private static func livePrimaryDurationForCounter(snapshot: TimeTrackingSnapshot, now: Date) -> TimeInterval {
         guard snapshot.status == .working,
               let start = snapshot.currentShiftStartedAtUtc
@@ -163,6 +210,26 @@ enum TimeTrackingWidgetViewModelMapper {
         )
     }
 
+    private static func liveJornadaSummarySeconds(snapshot: TimeTrackingSnapshot, now: Date) -> TimeInterval {
+        switch snapshot.status {
+        case .working, .onBreak:
+            guard let start = snapshot.currentShiftStartedAtUtc else {
+                return snapshot.summary.lastCompletedShiftWorkedDuration
+            }
+            return TimeTrackingLiveDuration.netWorkedSeconds(
+                shiftStartUtc: start,
+                breakSessions: snapshot.breakSessions,
+                nowUtc: now
+            )
+        case .notClockedIn, .offDuty:
+            return snapshot.summary.lastCompletedShiftWorkedDuration
+        }
+    }
+
+    private static func liveBreakTypeTotalSeconds(snapshot: TimeTrackingSnapshot, type: BreakType, now: Date) -> TimeInterval {
+        snapshot.breakSessions.filter { $0.type == type }.reduce(0) { $0 + $1.duration(nowUtc: now) }
+    }
+
     private static func normalizeCounterDuration(snapshot: TimeTrackingSnapshot, value: TimeInterval) -> TimeInterval {
         switch snapshot.status {
         case .working, .onBreak:
@@ -171,6 +238,8 @@ enum TimeTrackingWidgetViewModelMapper {
             return value < 60 ? 0 : value
         }
     }
+
+    // MARK: - Action translation
 
     private static func translateAction(_ action: TimeTrackingAction) -> String {
         switch action {
@@ -186,11 +255,11 @@ enum TimeTrackingWidgetViewModelMapper {
         }
     }
 
+    // MARK: - Timeline
+
     private static func buildTimelineText(snapshot: TimeTrackingSnapshot, locale: Locale) -> String {
         let events = resolveTimelineEvents(snapshot: snapshot)
-        if events.isEmpty {
-            return "Todavía no hay hitos registrados hoy."
-        }
+        if events.isEmpty { return "Todavía no hay hitos registrados hoy." }
         let formatter = DateFormatter()
         formatter.locale = locale
         formatter.dateFormat = "HH:mm"
@@ -199,9 +268,19 @@ enum TimeTrackingWidgetViewModelMapper {
             .joined(separator: " · ")
     }
 
+    private static func buildTimelineItems(snapshot: TimeTrackingSnapshot, locale: Locale) -> [String] {
+        let events = resolveTimelineEvents(snapshot: snapshot)
+        if events.isEmpty { return [] }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = TimeZone.current
+        return events.suffix(5).map { "\(formatter.string(from: $0.occurredAtUtc))  \(translateEvent($0))" }
+    }
+
     private static func resolveTimelineEvents(snapshot: TimeTrackingSnapshot) -> [WorkdayEvent] {
         let allowed: Set<WorkdayEventType> = [
-            .clockIn, .clockOut, .startCoffeeBreak, .endCoffeeBreak, .startFoodBreak, .endFoodBreak
+            .clockIn, .clockOut, .startCoffeeBreak, .endCoffeeBreak, .startFoodBreak, .endFoodBreak,
         ]
         let ordered = snapshot.workdayEvents
             .filter { allowed.contains($0.eventType) }
@@ -228,6 +307,8 @@ enum TimeTrackingWidgetViewModelMapper {
         }
     }
 
+    // MARK: - Formatting
+
     private static func formatDuration(_ value: TimeInterval) -> String {
         let totalSeconds = Int(value.rounded())
         let hours = totalSeconds / 3600
@@ -251,8 +332,7 @@ enum TimeTrackingWidgetViewModelMapper {
         guard let date else { return "—" }
         let formatter = DateFormatter()
         formatter.locale = locale
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
+        formatter.dateFormat = "HH:mm"
         formatter.timeZone = TimeZone.current
         return formatter.string(from: date)
     }
@@ -272,9 +352,7 @@ enum TimeTrackingWidgetViewModelMapper {
         } else {
             items = [trimmed]
         }
-        if items.count == 1 {
-            return items[0]
-        }
-        return items.map { "• \($0)" }.joined(separator: "\n")
+        if items.count == 1 { return items[0] }
+        return items.suffix(5).map { "• \($0)" }.joined(separator: "\n")
     }
 }

@@ -5,7 +5,7 @@
 
 import Foundation
 import Testing
-@testable import widget
+@testable import WidgetSharedKit
 
 struct TimeTrackingStateMachineTests {
     @Test func clockInFromNotClockedInSucceeds() {

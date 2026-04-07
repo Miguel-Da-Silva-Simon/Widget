@@ -8,6 +8,11 @@ final class LocalJsonTimeTrackingService: @unchecked Sendable {
         return toSnapshot(document: document, nowUtc: Date())
     }
 
+    /// Para el timeline del widget: convierte un documento ya cargado (p. ej. leyendo el plist del App Group).
+    func snapshot(document: TimeTrackingStateDocument, nowUtc: Date) -> TimeTrackingSnapshot {
+        toSnapshot(document: document, nowUtc: nowUtc)
+    }
+
     func clockIn() throws -> TimeTrackingCommandResult {
         try execute(
             action: .clockIn,
@@ -169,6 +174,16 @@ final class LocalJsonTimeTrackingService: @unchecked Sendable {
             foodBreakDurationToday: sumBreakDuration(sessions: breakSessionsForSummary, type: .food, nowUtc: nowUtc)
         )
 
+        let available: [TimeTrackingAction]
+        if let api = document.apiAvailableActions {
+            available = api
+        } else {
+            available = TimeTrackingStateMachine.availableActions(
+                status: document.status,
+                activeBreakType: document.activeBreakType
+            )
+        }
+
         return TimeTrackingSnapshot(
             status: document.status,
             lastAction: document.lastAction,
@@ -180,10 +195,7 @@ final class LocalJsonTimeTrackingService: @unchecked Sendable {
             workdayEvents: todayEvents,
             breakSessions: breakSessionsForSummary,
             summary: summary,
-            availableActions: TimeTrackingStateMachine.availableActions(
-                status: document.status,
-                activeBreakType: document.activeBreakType
-            )
+            availableActions: available
         )
     }
 

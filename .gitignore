@@ -15,4 +15,5 @@ Android/backend/.gradle-home/
 .gradle/
 .DS_Store
 Thumbs.db
-Mac/widget/.derivedData/
+Mac/widget/.derivedData*/
+Mac/widget/.build_tmp/

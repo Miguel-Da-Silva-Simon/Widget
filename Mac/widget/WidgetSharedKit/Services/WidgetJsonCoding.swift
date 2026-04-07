@@ -34,6 +34,22 @@ enum WidgetJsonCoding {
         return nil
     }
 
+    /// Valores heterogéneos en JSON (p. ej. fecha ISO en string o epoch en número) para recuperación tolerante en el widget.
+    static func dateFromLooseJsonValue(_ value: Any?) -> Date? {
+        switch value {
+        case let s as String:
+            return parseIso8601(s)
+        case let n as Double:
+            return Date(timeIntervalSince1970: n)
+        case let n as Int:
+            return Date(timeIntervalSince1970: TimeInterval(n))
+        case let n as NSNumber:
+            return Date(timeIntervalSince1970: n.doubleValue)
+        default:
+            return nil
+        }
+    }
+
     private static func formatIso8601(_ date: Date) -> String {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
